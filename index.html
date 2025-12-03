@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Debt Manager Ultimate V5.2 (Dana Integration)</title>
+    <title>Debt Manager Ultimate V5.3 (Anti-Error DANA)</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -80,7 +80,7 @@
                 <a class="nav-link" href="#" onclick="showSection('historySection', this)"><i class="fas fa-history"></i> Log Transaksi</a>
                 <a class="nav-link" href="#" onclick="showSection('investSection', this)"><i class="fas fa-coins"></i> Kelola Dana</a>
                 <hr class="border-secondary">
-                <div class="text-center text-muted small mt-4">V5.2 - Dana Integrated</div>
+                <div class="text-center text-muted small mt-4">V5.3 - Safe Dana Mode</div>
             </nav>
         </div>
     </div>
@@ -325,7 +325,6 @@
 
         if(sectionId === 'inputSection') {
             renderSourceCheckboxes();
-            // Reset dropdown state
             document.getElementById('sourceListContainer').style.display = 'none';
             document.getElementById('dropdownIcon').className = 'fas fa-chevron-down';
             document.getElementById('dropdownLabel').innerText = 'Klik untuk Pilih Sumber Dana...';
@@ -335,7 +334,7 @@
         
         updateDashboard();
         if(sectionId === 'activeSection') renderActiveLoans();
-        if(sectionId === 'historySection') renderTransactions('in'); // Default tab Uang Masuk
+        if(sectionId === 'historySection') renderTransactions('in'); 
         if(sectionId === 'investSection') renderInvestments();
         
         const sidebar = document.getElementById('sidebarMenu');
@@ -343,23 +342,15 @@
         if(bsOffcanvas) bsOffcanvas.hide();
     }
 
-    // --- 2. LOGGING SYSTEM (AUDIT TRAIL) ---
+    // --- 2. LOGGING ---
     function logTransaction(type, description, amount, from, to) {
         const now = new Date();
-        const log = {
-            id: Date.now() + Math.random(),
-            type: type, // 'IN' or 'OUT'
-            description: description,
-            amount: amount,
-            from: from,
-            to: to,
-            timestamp: now.toISOString()
-        };
+        const log = { id: Date.now() + Math.random(), type: type, description: description, amount: amount, from: from, to: to, timestamp: now.toISOString() };
         transactions.push(log);
         saveAll();
     }
 
-    // --- 3. INPUT MODAL LOGIC (UPDATED WITH SMART CALCULATOR) ---
+    // --- 3. INPUT MODAL ---
     document.getElementById('capitalType').addEventListener('change', function() {
         if(this.value === 'owner') {
             document.getElementById('ownerInputs').style.display = 'block';
@@ -372,7 +363,6 @@
         }
     });
 
-    // Smart Calculator Listener
     const capAmountInput = document.getElementById('capitalAmount');
     const adminCheck = document.getElementById('adminFeeCheck');
     const previewBox = document.getElementById('smartTopupPreview');
@@ -386,8 +376,7 @@
             previewBox.style.display = 'block';
             const availableForTopup = amount - 1500;
             const topupReal = Math.floor(availableForTopup / 1000) * 1000;
-            const change = availableForTopup - topupReal; // Sisa receh (500 perak)
-
+            const change = availableForTopup - topupReal; 
             document.getElementById('prevCash').innerText = formatRupiah(amount);
             document.getElementById('prevSaldo').innerText = formatRupiah(topupReal);
             document.getElementById('prevChange').innerText = formatRupiah(change);
@@ -422,16 +411,10 @@
         } else {
             const name = document.getElementById('investorNameInput').value.trim();
             if(!name) { alert("Nama investor wajib diisi!"); return; }
-            investors.push({
-                id: Date.now(),
-                name: name,
-                balance: inputAmount,
-                unsplitProfit: 0
-            });
+            investors.push({ id: Date.now(), name: name, balance: inputAmount, unsplitProfit: 0 });
             logTransaction('IN', `Modal Masuk Investor: ${name}`, inputAmount, name, `Saldo ${name}`);
             alert(`✅ Investor ${name} Masuk!`);
         }
-        
         saveAll();
         this.reset();
         previewBox.style.display = 'none';
@@ -439,26 +422,17 @@
         updateDashboard();
     });
 
-    // --- 4. MULTI-SOURCE LOAN LOGIC ---
+    // --- 4. MULTI-SOURCE LOAN ---
     function toggleSourceDropdown() {
         const container = document.getElementById('sourceListContainer');
         const icon = document.getElementById('dropdownIcon');
-        
-        if (container.style.display === 'none') {
-            container.style.display = 'block';
-            icon.className = 'fas fa-chevron-up';
-        } else {
-            container.style.display = 'none';
-            icon.className = 'fas fa-chevron-down';
-        }
+        if (container.style.display === 'none') { container.style.display = 'block'; icon.className = 'fas fa-chevron-up'; } else { container.style.display = 'none'; icon.className = 'fas fa-chevron-down'; }
     }
 
     function renderSourceCheckboxes() {
         sourceListContainer.innerHTML = '';
         addCheckbox('owner', 'OWNER (Kita)', owner.balance);
-        investors.forEach(inv => {
-            addCheckbox(inv.id, `Investor: ${inv.name}`, inv.balance);
-        });
+        investors.forEach(inv => { addCheckbox(inv.id, `Investor: ${inv.name}`, inv.balance); });
     }
 
     function addCheckbox(id, label, balance) {
@@ -471,7 +445,6 @@
                 updateTotalSelected();
             }
         };
-
         const input = document.createElement('input');
         input.className = 'form-check-input me-2';
         input.type = 'checkbox';
@@ -479,13 +452,11 @@
         input.id = `chk_${id}`;
         input.dataset.balance = balance;
         input.onchange = updateTotalSelected;
-
         const lbl = document.createElement('label');
         lbl.className = 'form-check-label text-white';
         lbl.style.cursor = 'pointer';
         lbl.htmlFor = `chk_${id}`;
         lbl.innerHTML = `${label} <br><small class="text-success fw-bold">Rp ${balance.toLocaleString()}</small>`;
-
         div.appendChild(input);
         div.appendChild(lbl);
         sourceListContainer.appendChild(div);
@@ -495,27 +466,13 @@
         const checkboxes = document.querySelectorAll('#sourceListContainer input:checked');
         let total = 0;
         let count = 0;
-        checkboxes.forEach(cb => {
-            total += parseInt(cb.dataset.balance);
-            cb.parentElement.classList.add('active');
-            count++;
-        });
-        document.querySelectorAll('#sourceListContainer input:not(:checked)').forEach(cb => {
-            cb.parentElement.classList.remove('active');
-        });
-        
+        checkboxes.forEach(cb => { total += parseInt(cb.dataset.balance); cb.parentElement.classList.add('active'); count++; });
+        document.querySelectorAll('#sourceListContainer input:not(:checked)').forEach(cb => { cb.parentElement.classList.remove('active'); });
         document.getElementById('totalSelectedFunds').innerText = `Total Dana Terpilih: ${formatRupiah(total)}`;
         const label = document.getElementById('dropdownLabel');
-        if (count === 0) {
-            label.innerText = "Klik untuk Pilih Sumber Dana...";
-            label.classList.remove('text-white');
-        } else {
-            label.innerText = `${count} Sumber Dipilih (${formatRupiah(total)})`;
-            label.classList.add('text-white');
-        }
+        if (count === 0) { label.innerText = "Klik untuk Pilih Sumber Dana..."; label.classList.remove('text-white'); } else { label.innerText = `${count} Sumber Dipilih (${formatRupiah(total)})`; label.classList.add('text-white'); }
     }
 
-    // SUBMIT LOAN (COMPLEX DISTRIBUTION)
     document.getElementById('loanForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const amount = parseInt(document.getElementById('amount').value);
@@ -528,22 +485,15 @@
             let id = cb.value;
             let currentBal = 0;
             if(id === 'owner') currentBal = owner.balance;
-            else {
-                const inv = investors.find(i => i.id == id);
-                if(inv) currentBal = inv.balance;
-            }
+            else { const inv = investors.find(i => i.id == id); if(inv) currentBal = inv.balance; }
             availableTotal += currentBal;
             sources.push({ id: id, balance: currentBal, contribution: 0 });
         });
 
-        if (amount > availableTotal) {
-            alert(`⛔ Saldo gabungan tidak cukup! Cuma ada ${formatRupiah(availableTotal)}`);
-            return;
-        }
+        if (amount > availableTotal) { alert(`⛔ Saldo gabungan tidak cukup! Cuma ada ${formatRupiah(availableTotal)}`); return; }
 
         let remainingLoan = amount;
-        let activeSources = [...sources]; 
-        
+        let activeSources = [...sources];
         while (remainingLoan > 0 && activeSources.length > 0) {
             let sharePerPerson = Math.ceil(remainingLoan / activeSources.length);
             let nextRoundSources = [];
@@ -554,9 +504,7 @@
                 takeAmount = Math.min(takeAmount, remainingLoan);
                 src.contribution += takeAmount;
                 remainingLoan -= takeAmount;
-                if (src.balance > src.contribution) {
-                    nextRoundSources.push(src);
-                }
+                if (src.balance > src.contribution) nextRoundSources.push(src);
             });
             activeSources = nextRoundSources;
         }
@@ -564,14 +512,8 @@
         let contributionLog = [];
         sources.forEach(src => {
             if (src.contribution > 0) {
-                if(src.id === 'owner') {
-                    owner.balance -= src.contribution;
-                    contributionLog.push(`Owner: ${formatRupiah(src.contribution)}`);
-                } else {
-                    const inv = investors.find(i => i.id == src.id);
-                    inv.balance -= src.contribution;
-                    contributionLog.push(`${inv.name}: ${formatRupiah(src.contribution)}`);
-                }
+                if(src.id === 'owner') { owner.balance -= src.contribution; contributionLog.push(`Owner: ${formatRupiah(src.contribution)}`); }
+                else { const inv = investors.find(i => i.id == src.id); inv.balance -= src.contribution; contributionLog.push(`${inv.name}: ${formatRupiah(src.contribution)}`); }
             }
         });
 
@@ -594,14 +536,10 @@
         });
 
         logTransaction('OUT', `Pinjaman Keluar ke ${name}`, amount, contributionLog.join(', '), name);
-        saveAll();
-        this.reset();
-        document.getElementById('previewBox').style.display = 'none';
-        showSection('activeSection');
-        alert("✅ Pinjaman Diproses! Dana dibagi sesuai saldo.");
+        saveAll(); this.reset(); document.getElementById('previewBox').style.display = 'none'; showSection('activeSection'); alert("✅ Pinjaman Diproses!");
     });
 
-    // --- 5. RENDER LOANS & HISTORY ---
+    // --- 5. RENDER LOANS (FIXED DANA BUTTON) ---
     function renderActiveLoans() {
         activeContainer.innerHTML = '';
         if (loans.length === 0) { document.getElementById('emptyActiveMsg').style.display = 'block'; return; }
@@ -630,11 +568,7 @@
             <div class="card ${cardClass} mb-3">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div>
-                            <h5 class="fw-bold mb-0 text-white">${loan.name}</h5>
-                            <small class="text-muted"><i class="fab fa-whatsapp"></i> +${loan.phone}</small>
-                        </div>
-                        ${statusBadge}
+                        <div><h5 class="fw-bold mb-0 text-white">${loan.name}</h5><small class="text-muted"><i class="fab fa-whatsapp"></i> +${loan.phone}</small></div>${statusBadge}
                     </div>
                     <div class="bg-dark p-2 rounded border border-secondary mb-3">
                         <div class="d-flex justify-content-between small text-muted"><span>Pokok</span> <span>${formatRupiah(loan.amount)}</span></div>
@@ -644,41 +578,30 @@
                     </div>
                     <div class="row g-2">
                         <div class="col-12">
-                            <button onclick="transferDana('${loan.phone}', ${loan.amount})" class="btn btn-primary w-100 fw-bold mb-2">
-                                <i class="fas fa-paper-plane"></i> CAIRKAN (DANA)
-                            </button>
+                            <button onclick="transferDana('${loan.phone}', ${loan.amount})" class="btn btn-primary w-100 fw-bold mb-2"><i class="fas fa-paper-plane"></i> CAIRKAN (DANA)</button>
                         </div>
-                        <div class="col-6">
-                            <button onclick="kirimWA('${loan.name}', '${loan.phone}', ${loan.amount}, ${currentAdmin}, ${denda}, ${totalBayar}, ${daysLate})" class="btn btn-outline-success w-100 fw-bold"><i class="fab fa-whatsapp"></i> TAGIH</button>
-                        </div>
-                        <div class="col-6">
-                            <button onclick="prosesLunas(${loan.id})" class="btn btn-success w-100 fw-bold"><i class="fas fa-check"></i> LUNAS</button>
-                        </div>
+                        <div class="col-6"><button onclick="kirimWA('${loan.name}', '${loan.phone}', ${loan.amount}, ${currentAdmin}, ${denda}, ${totalBayar}, ${daysLate})" class="btn btn-outline-success w-100 fw-bold"><i class="fab fa-whatsapp"></i> TAGIH</button></div>
+                        <div class="col-6"><button onclick="prosesLunas(${loan.id})" class="btn btn-success w-100 fw-bold"><i class="fas fa-check"></i> LUNAS</button></div>
                     </div>
                 </div>
             </div>`;
         });
     }
 
+    // --- FIX: DANA TRANSFER FUNCTION ---
     function transferDana(phone, amount) {
-        // Cleaning number. DANA usually needs 08... or 62...
-        // Let's ensure it starts with 0 or 62.
         let cleanPhone = phone.replace(/\D/g, '');
-        if (!cleanPhone.startsWith('62') && !cleanPhone.startsWith('0')) {
-            cleanPhone = '0' + cleanPhone;
-        }
+        if (!cleanPhone.startsWith('62') && !cleanPhone.startsWith('0')) { cleanPhone = '0' + cleanPhone; }
         
-        // Deep link attempt
-        const deepLink = `https://link.dana.id/transfer?amount=${amount}&phoneNumber=${cleanPhone}`;
-        
-        // Copy to clipboard fallback
-        const textToCopy = cleanPhone;
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            alert(`Nomor HP (${cleanPhone}) dan Nominal (${formatRupiah(amount)}) telah disalin!\n\nMencoba membuka aplikasi DANA...`);
-            window.location.href = deepLink;
-        }, (err) => {
-            alert('Gagal menyalin nomor. Membuka DANA...');
-            window.location.href = deepLink;
+        // Copy to clipboard
+        navigator.clipboard.writeText(cleanPhone).then(() => {
+            if(confirm(`Nomor ${cleanPhone} sudah dicopy!\n\nKarena kebijakan keamanan DANA, 'Auto-Isi' sering diblokir. Silakan PASTE nomornya manual.\n\nBuka aplikasi DANA sekarang?`)) {
+                // Open Generic DANA Send Money Page (Safer than direct link)
+                window.location.href = "https://link.dana.id/sendmoney";
+            }
+        }, () => {
+            prompt("Gagal copy otomatis. Copy nomor ini manual:", cleanPhone);
+            window.location.href = "https://link.dana.id/sendmoney";
         });
     }
 
@@ -692,24 +615,11 @@
             const dateStr = dateObj.toLocaleDateString('id-ID');
             const timeStr = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute:'2-digit' });
             const logClass = log.type === 'IN' ? 'log-in' : 'log-out';
-            const html = `
-            <div class="card mb-2 border-0 bg-dark border-bottom border-secondary rounded-0 ${logClass}">
-                <div class="card-body py-2 px-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="fw-bold text-white small">${log.description}</span>
-                        <span class="${log.type==='IN'?'text-success':'text-danger'} fw-bold">${log.type==='IN'?'+':'-'}${formatRupiah(log.amount)}</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center mt-1">
-                        <span class="log-date"><i class="far fa-clock"></i> ${dateStr} ${timeStr}</span>
-                        <span class="log-date text-end">From: ${log.from} <i class="fas fa-long-arrow-alt-right"></i> To: ${log.to}</span>
-                    </div>
-                </div>
-            </div>`;
+            const html = `<div class="card mb-2 border-0 bg-dark border-bottom border-secondary rounded-0 ${logClass}"><div class="card-body py-2 px-3"><div class="d-flex justify-content-between align-items-center"><span class="fw-bold text-white small">${log.description}</span><span class="${log.type==='IN'?'text-success':'text-danger'} fw-bold">${log.type==='IN'?'+':'-'}${formatRupiah(log.amount)}</span></div><div class="d-flex justify-content-between align-items-center mt-1"><span class="log-date"><i class="far fa-clock"></i> ${dateStr} ${timeStr}</span><span class="log-date text-end">From: ${log.from} <i class="fas fa-long-arrow-alt-right"></i> To: ${log.to}</span></div></div></div>`;
             transactionContainer.innerHTML += html;
         });
     }
 
-    // --- 6. PELUNASAN ---
     function prosesLunas(id) {
         const index = loans.findIndex(l => l.id === id);
         if (index === -1) return;
@@ -724,33 +634,19 @@
         let totalProfit = admin + denda;
 
         if(confirm(`Lunasi ${loan.name}?\nTotal: ${formatRupiah(totalReceived)}\n(Pokok ${formatRupiah(loan.amount)} + Profit ${formatRupiah(totalProfit)})`)) {
-            let payoutLog = [];
             loan.contributors.forEach(contrib => {
                 let sharePercentage = contrib.amount / loan.amount;
                 let returnPrincipal = contrib.amount;
                 let shareProfit = totalProfit * sharePercentage;
                 let totalBack = returnPrincipal + shareProfit;
-                if (contrib.id === 'owner') {
-                    owner.balance += totalBack;
-                    payoutLog.push(`Owner: +${formatRupiah(totalBack)}`);
-                } else {
-                    const inv = investors.find(i => i.id == contrib.id);
-                    if (inv) {
-                        inv.balance += totalBack;
-                        inv.unsplitProfit += shareProfit;
-                        payoutLog.push(`${inv.name}: +${formatRupiah(totalBack)}`);
-                    } else { owner.balance += totalBack; }
-                }
+                if (contrib.id === 'owner') { owner.balance += totalBack; }
+                else { const inv = investors.find(i => i.id == contrib.id); if (inv) { inv.balance += totalBack; inv.unsplitProfit += shareProfit; } else { owner.balance += totalBack; } }
             });
             logTransaction('IN', `Pelunasan: ${loan.name}`, totalReceived, loan.name, 'Contributors');
-            loans.splice(index, 1);
-            saveAll();
-            renderActiveLoans();
-            updateDashboard();
+            loans.splice(index, 1); saveAll(); renderActiveLoans(); updateDashboard();
         }
     }
 
-    // --- 7. INVESTASI ---
     function renderInvestments() {
         investorContainer.innerHTML = '';
         if(investors.length === 0) { investorContainer.innerHTML = '<p class="text-muted text-center small">Belum ada investor.</p>'; return; }
@@ -768,9 +664,7 @@
         const splitAmount = totalProfit / 2;
         if(confirm(`BAGI HASIL INVESTOR: ${inv.name}\nTotal Profit: ${formatRupiah(totalProfit)}\n\n50% ke Investor (Tetap)\n50% ke Owner (${formatRupiah(splitAmount)}) - PINDAH\n\nLanjutkan?`)) {
             if (inv.balance < splitAmount) { alert("Saldo investor kurang (sedang diputar)."); return; }
-            inv.balance -= splitAmount;
-            owner.balance += splitAmount;
-            inv.unsplitProfit = 0;
+            inv.balance -= splitAmount; owner.balance += splitAmount; inv.unsplitProfit = 0;
             logTransaction('OUT', `Bagi Hasil (Masuk Owner): ${inv.name}`, splitAmount, `Saldo ${inv.name}`, 'Saldo Owner');
             saveAll(); renderInvestments(); updateDashboard();
         }
@@ -778,7 +672,6 @@
 
     function hapusInvestor(index) { if(confirm("Hapus investor ini?")) { investors.splice(index, 1); saveAll(); renderInvestments(); updateDashboard(); } }
 
-    // --- UTILS ---
     function updateDashboard() {
         let invBalance = investors.reduce((acc, curr) => acc + curr.balance, 0);
         let usedAmount = loans.reduce((acc, curr) => acc + curr.amount, 0);
@@ -787,14 +680,8 @@
         document.getElementById('dashTotalAsset').innerText = formatRupiah(realTotalAsset);
         document.getElementById('dashUsed').innerText = formatRupiah(usedAmount);
         document.getElementById('dashAvailable').innerText = formatRupiah(totalAvailable);
-        document.getElementById('dashOwnerBalance').innerText = formatRupiah(owner.balance + loans.reduce((acc, l) => {
-            let ownCon = l.contributors.find(c => c.id === 'owner');
-            return acc + (ownCon ? ownCon.amount : 0);
-        }, 0));
-        document.getElementById('dashInvestorBalance').innerText = formatRupiah(invBalance + loans.reduce((acc, l) => {
-            let invConTotal = l.contributors.filter(c => c.id !== 'owner').reduce((a, c) => a + c.amount, 0);
-            return acc + invConTotal;
-        }, 0));
+        document.getElementById('dashOwnerBalance').innerText = formatRupiah(owner.balance + loans.reduce((acc, l) => { let ownCon = l.contributors.find(c => c.id === 'owner'); return acc + (ownCon ? ownCon.amount : 0); }, 0));
+        document.getElementById('dashInvestorBalance').innerText = formatRupiah(invBalance + loans.reduce((acc, l) => { let invConTotal = l.contributors.filter(c => c.id !== 'owner').reduce((a, c) => a + c.amount, 0); return acc + invConTotal; }, 0));
     }
 
     function getLoanConfig(amount) {
@@ -815,11 +702,8 @@
         if (!val) { previewDiv.style.display = 'none'; return; }
         const config = getLoanConfig(val);
         previewDiv.style.display = 'block';
-        if (config.error) {
-            previewDiv.innerHTML = `<span class="text-danger fw-bold">${config.error}</span>`;
-        } else {
-            previewDiv.innerHTML = `<div class="row text-center text-white"><div class="col-4 border-end border-secondary"><small class="text-muted d-block">Rate/Hari</small><span class="text-warning fw-bold">${formatRupiah(config.dailyRate)}</span></div><div class="col-4 border-end border-secondary"><small class="text-muted d-block">Max Admin</small><span>${formatRupiah(config.admin)}</span></div><div class="col-4"><small class="text-muted d-block">Tempo</small><span>${config.days} Hari</span></div></div>`;
-        }
+        if (config.error) { previewDiv.innerHTML = `<span class="text-danger fw-bold">${config.error}</span>`; }
+        else { previewDiv.innerHTML = `<div class="row text-center text-white"><div class="col-4 border-end border-secondary"><small class="text-muted d-block">Rate/Hari</small><span class="text-warning fw-bold">${formatRupiah(config.dailyRate)}</span></div><div class="col-4 border-end border-secondary"><small class="text-muted d-block">Max Admin</small><span>${formatRupiah(config.admin)}</span></div><div class="col-4"><small class="text-muted d-block">Tempo</small><span>${config.days} Hari</span></div></div>`; }
     });
 
     function kirimWA(name, phone, pokok, admin, denda, total, late) {
@@ -828,18 +712,9 @@
     }
 
     function resetData() { if(confirm("RESET TOTAL (Hapus Semua)?")) { localStorage.clear(); location.reload(); } }
-    
-    function saveAll() {
-        localStorage.setItem('loans_v5', JSON.stringify(loans));
-        localStorage.setItem('transactions_v5', JSON.stringify(transactions));
-        localStorage.setItem('blacklist_v5', JSON.stringify(blacklist));
-        localStorage.setItem('investors_v5', JSON.stringify(investors));
-        localStorage.setItem('owner_v5', JSON.stringify(owner));
-    }
-
+    function saveAll() { localStorage.setItem('loans_v5', JSON.stringify(loans)); localStorage.setItem('transactions_v5', JSON.stringify(transactions)); localStorage.setItem('blacklist_v5', JSON.stringify(blacklist)); localStorage.setItem('investors_v5', JSON.stringify(investors)); localStorage.setItem('owner_v5', JSON.stringify(owner)); }
     function formatRupiah(num) { return "Rp " + num.toLocaleString('id-ID'); }
 
-    // Init
     renderSourceCheckboxes();
     updateDashboard();
     showSection('dashboardSection', document.querySelector('.nav-link.active'));

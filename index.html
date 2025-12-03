@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Debt Manager Ultimate V2</title>
+    <title>Debt Manager Ultimate V5.1 (Smart Topup)</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -12,56 +12,45 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <style>
-        body { background-color: #121212; color: #e0e0e0; font-family: 'Poppins', sans-serif; overflow-x: hidden; }
+        body { background-color: #121212; color: #ffffff; font-family: 'Poppins', sans-serif; overflow-x: hidden; }
         
         /* Navbar & Sidebar */
         .navbar { background-color: #1f1f1f; border-bottom: 1px solid #333; }
         .offcanvas { background-color: #1f1f1f; color: white; }
-        .nav-link { color: #aaa; padding: 15px 20px; font-size: 1.1rem; border-radius: 10px; margin-bottom: 5px; transition: 0.3s; }
+        .nav-link { color: #ccc; padding: 15px 20px; font-size: 1.1rem; border-radius: 10px; margin-bottom: 5px; transition: 0.3s; }
         .nav-link:hover, .nav-link.active { background-color: #bb2d3b; color: white; }
         .nav-link i { width: 30px; }
 
         /* Cards & Inputs */
         .card { background-color: #1e1e1e; border: 1px solid #333; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); margin-bottom: 20px; }
-        .form-control { background-color: #2c2c2c; border: 1px solid #444; color: white; }
-        .form-control:focus { background-color: #333; color: white; border-color: #bb2d3b; box-shadow: none; }
-        /* Fix Input Text Color */
+        .form-control, .form-select { background-color: #2c2c2c; border: 1px solid #444; color: white; }
+        .form-control:focus, .form-select:focus { background-color: #333; color: white; border-color: #bb2d3b; box-shadow: none; }
         input, select, textarea { color: white !important; } 
+
+        /* Labels & Texts */
+        .form-label, label { color: #ffffff !important; font-weight: 500; opacity: 1 !important; }
+        .text-muted { color: #bbbbbb !important; }
+
+        /* Dashboard Boxes */
+        .dash-box { padding: 20px; border-radius: 15px; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+        .dash-blue { background: linear-gradient(135deg, #0d6efd, #0a58ca); }
+        .dash-orange { background: linear-gradient(135deg, #fd7e14, #ca6510); }
+        .dash-green { background: linear-gradient(135deg, #198754, #157347); }
 
         /* Utilities */
         .text-accent { color: #ff4757; }
-        .bg-accent { background-color: #ff4757; }
         .blink-urgent { animation: blinker 1s linear infinite; color: #ff4d4d; font-weight: bold; }
         @keyframes blinker { 50% { opacity: 0.5; } }
-
-        /* History & Invest */
-        .history-date-header {
-            background-color: #333;
-            padding: 10px 15px;
-            border-radius: 10px;
-            margin-top: 20px;
-            margin-bottom: 10px;
-            font-weight: bold;
-            color: #ffc107;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .stats-box {
-            background: linear-gradient(45deg, #1f1f1f, #2a2a2a);
-            border-left: 5px solid #28a745;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
         
-        .invest-box {
-            background: linear-gradient(45deg, #1f1f1f, #2a2a2a);
-            border-left: 5px solid #0dcaf0;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
+        /* Transaction Log Style */
+        .log-in { border-left: 4px solid #198754; background-color: rgba(25, 135, 84, 0.1); }
+        .log-out { border-left: 4px solid #dc3545; background-color: rgba(220, 53, 69, 0.1); }
+        .log-date { font-size: 0.75rem; color: #888; }
+        
+        /* Checkbox List */
+        .source-item { border: 1px solid #444; padding: 10px; border-radius: 8px; margin-bottom: 5px; cursor: pointer; transition: 0.2s; }
+        .source-item:hover { background-color: #2a2a2a; }
+        .source-item.active { border-color: #ff4757; background-color: #2c0b0e; }
     </style>
 </head>
 <body>
@@ -85,12 +74,13 @@
         </div>
         <div class="offcanvas-body">
             <nav class="nav flex-column">
-                <a class="nav-link active" href="#" onclick="showSection('activeSection', this)"><i class="fas fa-list-ul"></i> List Utang Aktif</a>
+                <a class="nav-link active" href="#" onclick="showSection('dashboardSection', this)"><i class="fas fa-tachometer-alt"></i> Dashboard Modal</a>
+                <a class="nav-link" href="#" onclick="showSection('activeSection', this)"><i class="fas fa-list-ul"></i> List Utang Aktif</a>
                 <a class="nav-link" href="#" onclick="showSection('inputSection', this)"><i class="fas fa-plus-circle"></i> Tambah Utang</a>
-                <a class="nav-link" href="#" onclick="showSection('historySection', this)"><i class="fas fa-history"></i> Riwayat & Laporan</a>
-                <a class="nav-link" href="#" onclick="showSection('investSection', this)"><i class="fas fa-chart-line"></i> Modal & Investasi</a>
+                <a class="nav-link" href="#" onclick="showSection('historySection', this)"><i class="fas fa-history"></i> Log Transaksi</a>
+                <a class="nav-link" href="#" onclick="showSection('investSection', this)"><i class="fas fa-coins"></i> Kelola Dana</a>
                 <hr class="border-secondary">
-                <a class="nav-link text-danger" href="#" onclick="resetData()"><i class="fas fa-trash-alt"></i> Reset Data</a>
+                <div class="text-center text-muted small mt-4">V5.1 - Smart Topup</div>
             </nav>
         </div>
     </div>
@@ -98,110 +88,202 @@
     <!-- MAIN CONTENT -->
     <div class="container py-4" style="max-width: 800px;">
 
+        <!-- 0. SECTION: DASHBOARD MODAL -->
+        <div id="dashboardSection">
+            <h4 class="mb-3 fw-bold border-start border-4 border-info ps-3">STATUS KEUANGAN</h4>
+            
+            <div class="row g-3 mb-4">
+                <div class="col-12">
+                    <div class="dash-box dash-blue shadow">
+                        <small class="text-white opacity-75">TOTAL ASET (MODAL + PROFIT)</small>
+                        <h2 class="fw-bold mb-0" id="dashTotalAsset">Rp 0</h2>
+                        <small class="text-white fst-italic mt-1">(Owner + Investor)</small>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="dash-box dash-orange shadow">
+                        <small class="text-white opacity-75">DIPINJAM ORANG</small>
+                        <h4 class="fw-bold mb-0" id="dashUsed">Rp 0</h4>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="dash-box dash-green shadow">
+                        <small class="text-white opacity-75">SALDO READY</small>
+                        <h4 class="fw-bold mb-0" id="dashAvailable">Rp 0</h4>
+                        <small class="text-white mt-1" style="font-size: 0.7rem;">(Siap Diputar)</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="text-accent fw-bold mb-3"><i class="fas fa-chart-pie"></i> Ringkasan Aset</h5>
+                    <div class="d-flex justify-content-between border-bottom border-secondary pb-2 mb-2">
+                        <span>Aset Owner (Saldo Kita)</span>
+                        <span class="text-success fw-bold" id="dashOwnerBalance">Rp 0</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Aset Investor (Saldo Mereka)</span>
+                        <span class="text-info fw-bold" id="dashInvestorBalance">Rp 0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 1. SECTION: LIST UTANG AKTIF -->
-        <div id="activeSection">
+        <div id="activeSection" style="display:none;">
             <h4 class="mb-3 fw-bold border-start border-4 border-danger ps-3">TAGIHAN BERJALAN</h4>
             <div id="activeLoanContainer"></div>
             <div id="emptyActiveMsg" class="text-center text-muted py-5" style="display:none;">
                 <i class="fas fa-check-circle fa-3x mb-3 text-success"></i><br>
-                Tidak ada utang aktif.
+                Semua uang aman di brankas.
             </div>
         </div>
 
         <!-- 2. SECTION: INPUT UTANG BARU -->
         <div id="inputSection" style="display:none;">
             <h4 class="mb-3 fw-bold border-start border-4 border-primary ps-3">INPUT KORBAN BARU</h4>
+            
             <div class="card">
                 <div class="card-body">
                     <form id="loanForm">
+                        <!-- MULTI SOURCE SELECTION (COLLAPSIBLE) -->
                         <div class="mb-3">
-                            <label class="form-label text-muted small">Nama Peminjam</label>
+                            <label class="form-label text-warning fw-bold"><i class="fas fa-wallet"></i> Sumber Dana</label>
+                            
+                            <!-- Trigger Button -->
+                            <button type="button" class="btn btn-outline-secondary w-100 text-start d-flex justify-content-between align-items-center" onclick="toggleSourceDropdown()">
+                                <span id="dropdownLabel">Klik untuk Pilih Sumber Dana...</span>
+                                <i class="fas fa-chevron-down" id="dropdownIcon"></i>
+                            </button>
+
+                            <!-- Collapsible Content -->
+                            <div id="sourceListContainer" class="mt-2 p-2 border border-secondary rounded bg-dark" style="display: none;">
+                                <!-- Checkboxes populated by JS -->
+                            </div>
+                            
+                            <div class="form-text text-info mt-2" id="totalSelectedFunds">Total Dana Terpilih: Rp 0</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Nama Peminjam</label>
                             <input type="text" class="form-control fw-bold text-uppercase" id="borrowerName" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label text-muted small">Nomor WhatsApp</label>
+                            <label class="form-label">Nomor WhatsApp</label>
                             <input type="number" class="form-control" id="borrowerPhone" placeholder="08..." required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label text-muted small">Nominal (10k - 100k)</label>
+                            <label class="form-label">Nominal (10k - 100k)</label>
                             <input type="number" class="form-control fw-bold text-accent fs-4" id="amount" placeholder="0" required>
                         </div>
                         
                         <div id="previewBox" class="alert alert-dark border border-secondary" style="display:none;"></div>
 
                         <button type="submit" class="btn btn-danger w-100 fw-bold py-3 mt-2">
-                            <i class="fas fa-save"></i> SIMPAN DATA
+                            <i class="fas fa-save"></i> PROSES PINJAMAN
                         </button>
                     </form>
                 </div>
             </div>
         </div>
 
-        <!-- 3. SECTION: RIWAYAT & LAPORAN -->
+        <!-- 3. SECTION: RIWAYAT & LAPORAN (LOG TRANSAKSI) -->
         <div id="historySection" style="display:none;">
-            <h4 class="mb-3 fw-bold border-start border-4 border-success ps-3">RIWAYAT & CUAN</h4>
+            <h4 class="mb-3 fw-bold border-start border-4 border-success ps-3">LOG TRANSAKSI</h4>
             
-            <div class="stats-box row mx-0">
-                <div class="col-6 border-end border-secondary">
-                    <small class="text-muted d-block">Omzet (Uang Masuk)</small>
-                    <span class="fs-5 fw-bold text-white" id="totalRevenue">Rp 0</span>
-                </div>
-                <div class="col-6 text-end">
-                    <small class="text-muted d-block">Net Profit (Untung)</small>
-                    <span class="fs-5 fw-bold text-success" id="netProfit">Rp 0</span>
-                </div>
-            </div>
+            <ul class="nav nav-pills mb-3 nav-fill" id="pills-tab" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active bg-dark border border-secondary text-white mx-1" onclick="renderTransactions('in')">
+                        <i class="fas fa-arrow-down text-success"></i> Uang Masuk
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link bg-dark border border-secondary text-white mx-1" onclick="renderTransactions('out')">
+                        <i class="fas fa-arrow-up text-danger"></i> Uang Keluar
+                    </button>
+                </li>
+            </ul>
 
-            <div id="historyContainer"></div>
-            <div id="emptyHistoryMsg" class="text-center text-muted py-5" style="display:none;">
-                Belum ada data pelunasan.
+            <div id="transactionContainer" class="mt-3">
+                <!-- Log List -->
             </div>
         </div>
 
-        <!-- 4. SECTION: MODAL & INVESTASI (NEW) -->
+        <!-- 4. SECTION: KELOLA DANA (MODAL & INVESTOR) -->
         <div id="investSection" style="display:none;">
-            <h4 class="mb-3 fw-bold border-start border-4 border-info ps-3">MODAL & INVESTOR</h4>
+            <h4 class="mb-3 fw-bold border-start border-4 border-warning ps-3">MODAL & INVESTOR</h4>
             
-            <!-- Summary Investasi -->
-            <div class="invest-box">
-                <div class="row">
-                    <div class="col-6 border-end border-secondary">
-                        <small class="text-muted d-block">Total Modal Masuk</small>
-                        <span class="fs-4 fw-bold text-white" id="totalCapitalDisplay">Rp 0</span>
-                    </div>
-                    <div class="col-6 text-end">
-                        <small class="text-white d-block fw-bold">Jatah Investor (50%)</small>
-                        <span class="fs-4 fw-bold text-warning" id="investorShareDisplay">Rp 0</span>
-                        <small class="d-block text-muted" style="font-size: 0.7rem;">Dari Total Net Profit</small>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Form Tambah Modal -->
+            <!-- Card Input Modal -->
             <div class="card mb-4">
-                <div class="card-header bg-dark border-secondary text-info fw-bold">
-                    <i class="fas fa-hand-holding-usd"></i> Tambah Investor Baru
+                <div class="card-header bg-dark border-secondary fw-bold text-warning">
+                    <i class="fas fa-plus-circle"></i> Tambah Modal Baru
                 </div>
                 <div class="card-body">
-                    <form id="investForm" class="row g-2 align-items-end">
-                        <div class="col-5">
-                            <label class="small text-muted">Nama Investor</label>
-                            <input type="text" class="form-control" id="investorName" placeholder="Nama" required>
+                    <form id="capitalForm">
+                        <div class="mb-3">
+                            <label class="form-label">Jenis Modal</label>
+                            <select class="form-select" id="capitalType">
+                                <option value="owner">Modal Sendiri (Owner)</option>
+                                <option value="investor">Modal Investor</option>
+                            </select>
                         </div>
-                        <div class="col-5">
-                            <label class="small text-muted">Jumlah Modal</label>
-                            <input type="number" class="form-control" id="investorAmount" placeholder="Rp" required>
+
+                        <div class="mb-3">
+                            <label class="form-label" id="capitalAmountLabel">Total Uang Cash (Rp)</label>
+                            <input type="number" class="form-control fw-bold text-white fs-4" id="capitalAmount" placeholder="Rp" required>
                         </div>
-                        <div class="col-2">
-                            <button type="submit" class="btn btn-info w-100"><i class="fas fa-plus"></i></button>
+
+                        <div id="ownerInputs">
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="adminFeeCheck">
+                                <label class="form-check-label text-muted" for="adminFeeCheck">Via Indomaret (Admin Rp 1.500)</label>
+                            </div>
+                            <!-- Live Kalkulator -->
+                            <div id="smartTopupPreview" class="alert alert-dark border border-secondary mt-2" style="display:none;">
+                                <div class="d-flex justify-content-between text-muted small">
+                                    <span>Cash Awal:</span> <span id="prevCash">Rp 0</span>
+                                </div>
+                                <div class="d-flex justify-content-between text-danger small">
+                                    <span>Admin:</span> <span>-Rp 1.500</span>
+                                </div>
+                                <div class="border-top border-secondary my-1"></div>
+                                <div class="d-flex justify-content-between fw-bold text-success">
+                                    <span>Masuk Saldo:</span> <span id="prevSaldo">Rp 0</span>
+                                </div>
+                                <div class="d-flex justify-content-between text-warning small mt-1">
+                                    <span>Kembalian/Receh:</span> <span id="prevChange">Rp 0</span>
+                                </div>
+                            </div>
                         </div>
+
+                        <div id="investorInputs" style="display:none;">
+                            <div class="mb-3">
+                                <label class="form-label">Nama Investor</label>
+                                <input type="text" class="form-control" id="investorNameInput" placeholder="Nama Investor">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-warning w-100 fw-bold text-dark mt-3">PROSES MODAL</button>
                     </form>
                 </div>
             </div>
 
-            <!-- List Investor -->
-            <h6 class="text-muted text-uppercase mb-2">Daftar Pemodal</h6>
+            <!-- Tabel Modal Sendiri -->
+            <div class="card border-primary mb-4">
+                <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between">
+                    <span><i class="fas fa-user-shield"></i> MODAL SENDIRI</span>
+                    <span id="displayOwnerBalance">Rp 0</span>
+                </div>
+                <div class="card-body text-center p-2 text-muted small">
+                    Uang ini aman milik kita pribadi.
+                </div>
+            </div>
+
+            <!-- Tabel Investor -->
+            <h5 class="text-white fw-bold mb-3">DAFTAR INVESTOR</h5>
             <div id="investorListContainer"></div>
+
         </div>
 
     </div>
@@ -217,28 +299,43 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // --- DATABASE ---
-    let loans = JSON.parse(localStorage.getItem('active_loans')) || [];
-    let history = JSON.parse(localStorage.getItem('history_loans')) || [];
-    let blacklist = JSON.parse(localStorage.getItem('blacklist_users')) || [];
-    let investors = JSON.parse(localStorage.getItem('investors_db')) || [];
+    let loans = JSON.parse(localStorage.getItem('loans_v5')) || [];
+    let transactions = JSON.parse(localStorage.getItem('transactions_v5')) || [];
+    let blacklist = JSON.parse(localStorage.getItem('blacklist_v5')) || [];
+    let investors = JSON.parse(localStorage.getItem('investors_v5')) || [];
+    let owner = JSON.parse(localStorage.getItem('owner_v5')) || { balance: 0 };
 
     // --- DOM Elements ---
     const activeContainer = document.getElementById('activeLoanContainer');
-    const historyContainer = document.getElementById('historyContainer');
+    const transactionContainer = document.getElementById('transactionContainer');
     const investorContainer = document.getElementById('investorListContainer');
+    const sourceListContainer = document.getElementById('sourceListContainer');
     
     // --- 1. NAVIGASI ---
     function showSection(sectionId, linkElement) {
-        ['activeSection', 'inputSection', 'historySection', 'investSection'].forEach(id => {
+        ['dashboardSection', 'activeSection', 'inputSection', 'historySection', 'investSection'].forEach(id => {
             document.getElementById(id).style.display = 'none';
         });
         document.getElementById(sectionId).style.display = 'block';
 
-        document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
-        if(linkElement) linkElement.classList.add('active');
+        if(linkElement) {
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+            linkElement.classList.add('active');
+        }
 
+        if(sectionId === 'inputSection') {
+            renderSourceCheckboxes();
+            // Reset dropdown state
+            document.getElementById('sourceListContainer').style.display = 'none';
+            document.getElementById('dropdownIcon').className = 'fas fa-chevron-down';
+            document.getElementById('dropdownLabel').innerText = 'Klik untuk Pilih Sumber Dana...';
+            document.getElementById('dropdownLabel').classList.remove('text-white');
+            document.getElementById('totalSelectedFunds').innerText = 'Total Dana Terpilih: Rp 0';
+        }
+        
+        updateDashboard();
         if(sectionId === 'activeSection') renderActiveLoans();
-        if(sectionId === 'historySection') renderHistory();
+        if(sectionId === 'historySection') renderTransactions('in'); // Default tab Uang Masuk
         if(sectionId === 'investSection') renderInvestments();
         
         const sidebar = document.getElementById('sidebarMenu');
@@ -246,352 +343,524 @@
         if(bsOffcanvas) bsOffcanvas.hide();
     }
 
-    // --- 2. LOGIKA UTANG ---
+    // --- 2. LOGGING SYSTEM (AUDIT TRAIL) ---
+    function logTransaction(type, description, amount, from, to) {
+        const now = new Date();
+        const log = {
+            id: Date.now() + Math.random(),
+            type: type, // 'IN' or 'OUT'
+            description: description,
+            amount: amount,
+            from: from,
+            to: to,
+            timestamp: now.toISOString()
+        };
+        transactions.push(log);
+        saveAll();
+    }
+
+    // --- 3. INPUT MODAL LOGIC (UPDATED WITH SMART CALCULATOR) ---
+    document.getElementById('capitalType').addEventListener('change', function() {
+        if(this.value === 'owner') {
+            document.getElementById('ownerInputs').style.display = 'block';
+            document.getElementById('investorInputs').style.display = 'none';
+            document.getElementById('capitalAmountLabel').innerText = "Total Uang Cash (Rp)";
+        } else {
+            document.getElementById('ownerInputs').style.display = 'none';
+            document.getElementById('investorInputs').style.display = 'block';
+            document.getElementById('capitalAmountLabel').innerText = "Jumlah Modal (Rp)";
+        }
+    });
+
+    // Smart Calculator Listener
+    const capAmountInput = document.getElementById('capitalAmount');
+    const adminCheck = document.getElementById('adminFeeCheck');
+    const previewBox = document.getElementById('smartTopupPreview');
+
+    function updateSmartPreview() {
+        const type = document.getElementById('capitalType').value;
+        const amount = parseInt(capAmountInput.value) || 0;
+        const isFee = adminCheck.checked;
+
+        if (type === 'owner' && isFee && amount > 1500) {
+            previewBox.style.display = 'block';
+            
+            // LOGIKA PINTAR: (Cash - 1500) lalu dibulatkan ke bawah ke ribuan terdekat
+            const availableForTopup = amount - 1500;
+            const topupReal = Math.floor(availableForTopup / 1000) * 1000;
+            const change = availableForTopup - topupReal; // Sisa receh (500 perak)
+
+            document.getElementById('prevCash').innerText = formatRupiah(amount);
+            document.getElementById('prevSaldo').innerText = formatRupiah(topupReal);
+            document.getElementById('prevChange').innerText = formatRupiah(change);
+        } else {
+            previewBox.style.display = 'none';
+        }
+    }
+
+    capAmountInput.addEventListener('input', updateSmartPreview);
+    adminCheck.addEventListener('change', updateSmartPreview);
+    document.getElementById('capitalType').addEventListener('change', updateSmartPreview);
+
+    document.getElementById('capitalForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const type = document.getElementById('capitalType').value;
+        let inputAmount = parseInt(document.getElementById('capitalAmount').value);
+        let finalAmount = inputAmount;
+        let change = 0;
+        
+        if(type === 'owner') {
+            if(document.getElementById('adminFeeCheck').checked) {
+                // Gunakan Logika Smart
+                const available = inputAmount - 1500;
+                finalAmount = Math.floor(available / 1000) * 1000;
+                change = available - finalAmount;
+
+                logTransaction('OUT', 'Biaya Admin Topup', 1500, 'Owner Cash', 'Indomaret');
+            }
+            
+            owner.balance += finalAmount;
+            logTransaction('IN', `Topup Owner (Cash: ${formatRupiah(inputAmount)})`, finalAmount, 'Owner Pocket', 'Saldo Owner');
+            
+            let msg = `✅ Saldo Owner Bertambah: ${formatRupiah(finalAmount)}`;
+            if(change > 0) msg += `\n\n⚠️ Sisa Receh di Tangan: ${formatRupiah(change)}`;
+            alert(msg);
+
+        } else {
+            const name = document.getElementById('investorNameInput').value.trim();
+            if(!name) { alert("Nama investor wajib diisi!"); return; }
+            
+            investors.push({
+                id: Date.now(),
+                name: name,
+                balance: inputAmount,
+                unsplitProfit: 0
+            });
+            logTransaction('IN', `Modal Masuk Investor: ${name}`, inputAmount, name, `Saldo ${name}`);
+            alert(`✅ Investor ${name} Masuk!`);
+        }
+        
+        saveAll();
+        this.reset();
+        previewBox.style.display = 'none';
+        renderInvestments();
+        updateDashboard();
+    });
+
+    // --- 4. MULTI-SOURCE LOAN LOGIC ---
+    function toggleSourceDropdown() {
+        const container = document.getElementById('sourceListContainer');
+        const icon = document.getElementById('dropdownIcon');
+        
+        if (container.style.display === 'none') {
+            container.style.display = 'block';
+            icon.className = 'fas fa-chevron-up';
+        } else {
+            container.style.display = 'none';
+            icon.className = 'fas fa-chevron-down';
+        }
+    }
+
+    function renderSourceCheckboxes() {
+        sourceListContainer.innerHTML = '';
+        
+        // Owner
+        addCheckbox('owner', 'OWNER (Kita)', owner.balance);
+
+        // Investors
+        investors.forEach(inv => {
+            addCheckbox(inv.id, `Investor: ${inv.name}`, inv.balance);
+        });
+    }
+
+    function addCheckbox(id, label, balance) {
+        const div = document.createElement('div');
+        div.className = 'form-check source-item';
+        div.onclick = function(e) {
+            // Toggle check when clicking div
+            if (e.target.type !== 'checkbox') {
+                const cb = div.querySelector('input');
+                cb.checked = !cb.checked;
+                updateTotalSelected();
+            }
+        };
+
+        const input = document.createElement('input');
+        input.className = 'form-check-input me-2';
+        input.type = 'checkbox';
+        input.value = id;
+        input.id = `chk_${id}`;
+        input.dataset.balance = balance;
+        input.onchange = updateTotalSelected;
+
+        const lbl = document.createElement('label');
+        lbl.className = 'form-check-label text-white';
+        lbl.style.cursor = 'pointer';
+        lbl.htmlFor = `chk_${id}`;
+        lbl.innerHTML = `${label} <br><small class="text-success fw-bold">Rp ${balance.toLocaleString()}</small>`;
+
+        div.appendChild(input);
+        div.appendChild(lbl);
+        sourceListContainer.appendChild(div);
+    }
+
+    function updateTotalSelected() {
+        const checkboxes = document.querySelectorAll('#sourceListContainer input:checked');
+        let total = 0;
+        let count = 0;
+        checkboxes.forEach(cb => {
+            total += parseInt(cb.dataset.balance);
+            cb.parentElement.classList.add('active');
+            count++;
+        });
+        document.querySelectorAll('#sourceListContainer input:not(:checked)').forEach(cb => {
+            cb.parentElement.classList.remove('active');
+        });
+        
+        // Update Total Text
+        document.getElementById('totalSelectedFunds').innerText = `Total Dana Terpilih: ${formatRupiah(total)}`;
+        
+        // Update Dropdown Label
+        const label = document.getElementById('dropdownLabel');
+        if (count === 0) {
+            label.innerText = "Klik untuk Pilih Sumber Dana...";
+            label.classList.remove('text-white');
+        } else {
+            label.innerText = `${count} Sumber Dipilih (${formatRupiah(total)})`;
+            label.classList.add('text-white');
+        }
+    }
+
+    // SUBMIT LOAN (COMPLEX DISTRIBUTION)
+    document.getElementById('loanForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const amount = parseInt(document.getElementById('amount').value);
+        const checkboxes = document.querySelectorAll('#sourceListContainer input:checked');
+        
+        if(checkboxes.length === 0) { alert("Pilih minimal 1 sumber dana!"); return; }
+
+        let availableTotal = 0;
+        let sources = [];
+        
+        // Collect Selected Sources
+        checkboxes.forEach(cb => {
+            let id = cb.value;
+            let currentBal = 0;
+            if(id === 'owner') currentBal = owner.balance;
+            else {
+                const inv = investors.find(i => i.id == id);
+                if(inv) currentBal = inv.balance;
+            }
+            availableTotal += currentBal;
+            sources.push({ id: id, balance: currentBal, contribution: 0 });
+        });
+
+        if (amount > availableTotal) {
+            alert(`⛔ Saldo gabungan tidak cukup! Cuma ada ${formatRupiah(availableTotal)}`);
+            return;
+        }
+
+        // --- DISTRIBUTION ALGORITHM ---
+        // Mencoba bagi rata dulu. Jika salah satu kurang, ambil max punya dia, sisanya bebankan ke yang lain.
+        let remainingLoan = amount;
+        
+        // 1. Bagi Rata Ideal
+        let activeSources = [...sources]; // Copy array
+        
+        while (remainingLoan > 0 && activeSources.length > 0) {
+            let sharePerPerson = Math.ceil(remainingLoan / activeSources.length);
+            let nextRoundSources = [];
+
+            activeSources.forEach(src => {
+                if (remainingLoan <= 0) return;
+
+                // Hitung berapa yang bisa dia kasih (Sisa balance dia - yang udah dia kasih)
+                let availableToGive = src.balance - src.contribution;
+                
+                let takeAmount = Math.min(sharePerPerson, availableToGive);
+                // Jangan ambil lebih dari sisa hutang
+                takeAmount = Math.min(takeAmount, remainingLoan);
+
+                src.contribution += takeAmount;
+                remainingLoan -= takeAmount;
+
+                // Jika dia masih punya sisa saldo, dia ikut ronde pembagian berikutnya (kalau ada sisa hutang)
+                if (src.balance > src.contribution) {
+                    nextRoundSources.push(src);
+                }
+            });
+            activeSources = nextRoundSources;
+        }
+
+        // APPLY DEDUCTIONS
+        let contributionLog = [];
+        sources.forEach(src => {
+            if (src.contribution > 0) {
+                if(src.id === 'owner') {
+                    owner.balance -= src.contribution;
+                    contributionLog.push(`Owner: ${formatRupiah(src.contribution)}`);
+                } else {
+                    const inv = investors.find(i => i.id == src.id);
+                    inv.balance -= src.contribution;
+                    contributionLog.push(`${inv.name}: ${formatRupiah(src.contribution)}`);
+                }
+            }
+        });
+
+        const name = document.getElementById('borrowerName').value.trim().toUpperCase();
+        let phone = document.getElementById('borrowerPhone').value.trim();
+        phone = phone.replace(/\D/g, '');
+        if (phone.startsWith('0')) phone = '62' + phone.substring(1);
+        else if (!phone.startsWith('62')) phone = '62' + phone;
+
+        const config = getLoanConfig(amount);
+
+        const now = new Date();
+        const dueDate = new Date(now);
+        dueDate.setDate(dueDate.getDate() + config.days);
+
+        // Save Loan with Contributors List
+        loans.push({
+            id: Date.now(), name, phone, amount,
+            maxAdmin: config.admin, dailyRate: config.dailyRate, daysLimit: config.days,
+            dateCreated: now.toISOString(), dueDate: dueDate.toISOString(),
+            contributors: sources.map(s => ({ id: s.id, amount: s.contribution })).filter(c => c.amount > 0)
+        });
+
+        // Log Transaction
+        logTransaction('OUT', `Pinjaman Keluar ke ${name}`, amount, contributionLog.join(', '), name);
+
+        saveAll();
+        this.reset();
+        document.getElementById('previewBox').style.display = 'none';
+        showSection('activeSection');
+        alert("✅ Pinjaman Diproses! Dana dibagi sesuai saldo.");
+    });
+
+    // --- 5. RENDER LOANS & HISTORY ---
+    function renderActiveLoans() {
+        activeContainer.innerHTML = '';
+        if (loans.length === 0) { document.getElementById('emptyActiveMsg').style.display = 'block'; return; }
+        document.getElementById('emptyActiveMsg').style.display = 'none';
+        const now = new Date();
+        loans.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+        loans.forEach(loan => {
+            const dueDate = new Date(loan.dueDate);
+            const createdDate = new Date(loan.dateCreated);
+            let daysElapsed = Math.ceil((now - createdDate) / (1000 * 60 * 60 * 24)) || 1;
+            let daysLate = Math.ceil((now - dueDate) / (1000 * 60 * 60 * 24));
+            let currentAdmin = 0, denda = 0, statusBadge = '', cardClass = 'border-secondary';
+
+            if (daysLate > 0) {
+                currentAdmin = loan.maxAdmin; denda = daysLate * 3000; cardClass = 'border-danger';
+                statusBadge = `<span class="badge bg-danger blink-urgent">TELAT ${daysLate} HARI</span>`;
+                if (daysLate > 2 && !blacklist.includes(loan.name)) { blacklist.push(loan.name); saveAll(); }
+            } else {
+                currentAdmin = Math.min(daysElapsed * loan.dailyRate, loan.maxAdmin);
+                statusBadge = `<span class="badge bg-success">HARI KE-${daysElapsed}</span>`;
+            }
+            const totalBayar = loan.amount + currentAdmin + denda;
+            
+            activeContainer.innerHTML += `<div class="card ${cardClass} mb-3"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-2"><div><h5 class="fw-bold mb-0 text-white">${loan.name}</h5><small class="text-muted"><i class="fab fa-whatsapp"></i> +${loan.phone}</small></div>${statusBadge}</div><div class="bg-dark p-2 rounded border border-secondary mb-3"><div class="d-flex justify-content-between small text-muted"><span>Pokok</span> <span>${formatRupiah(loan.amount)}</span></div><div class="d-flex justify-content-between small text-info"><span>Admin</span> <span>${formatRupiah(currentAdmin)}</span></div>${denda > 0 ? `<div class="d-flex justify-content-between small text-danger fw-bold"><span>Denda</span> <span>${formatRupiah(denda)}</span></div>` : ''}<div class="border-top border-secondary mt-1 pt-1 d-flex justify-content-between fw-bold text-white fs-5"><span>TOTAL</span> <span>${formatRupiah(totalBayar)}</span></div></div><div class="row g-2"><div class="col-6"><button onclick="kirimWA('${loan.name}', '${loan.phone}', ${loan.amount}, ${currentAdmin}, ${denda}, ${totalBayar}, ${daysLate})" class="btn btn-outline-success w-100 fw-bold"><i class="fab fa-whatsapp"></i> TAGIH</button></div><div class="col-6"><button onclick="prosesLunas(${loan.id})" class="btn btn-primary w-100 fw-bold"><i class="fas fa-check"></i> LUNAS</button></div></div></div></div>`;
+        });
+    }
+
+    function renderTransactions(filterType) {
+        transactionContainer.innerHTML = '';
+        // Filter transactions
+        const filtered = transactions.filter(t => filterType === 'in' ? t.type === 'IN' : t.type === 'OUT');
+        
+        if (filtered.length === 0) {
+            transactionContainer.innerHTML = '<p class="text-center text-muted py-5">Belum ada data transaksi ini.</p>';
+            return;
+        }
+
+        // Sort latest first
+        filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        filtered.forEach(log => {
+            const dateObj = new Date(log.timestamp);
+            const dateStr = dateObj.toLocaleDateString('id-ID');
+            const timeStr = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute:'2-digit' });
+            const logClass = log.type === 'IN' ? 'log-in' : 'log-out';
+            const icon = log.type === 'IN' ? 'fa-arrow-down text-success' : 'fa-arrow-up text-danger';
+
+            const html = `
+            <div class="card mb-2 border-0 bg-dark border-bottom border-secondary rounded-0 ${logClass}">
+                <div class="card-body py-2 px-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold text-white small">${log.description}</span>
+                        <span class="${log.type==='IN'?'text-success':'text-danger'} fw-bold">${log.type==='IN'?'+':'-'}${formatRupiah(log.amount)}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-1">
+                        <span class="log-date"><i class="far fa-clock"></i> ${dateStr} ${timeStr}</span>
+                        <span class="log-date text-end">From: ${log.from} <i class="fas fa-long-arrow-alt-right"></i> To: ${log.to}</span>
+                    </div>
+                </div>
+            </div>`;
+            transactionContainer.innerHTML += html;
+        });
+    }
+
+    // --- 6. PELUNASAN (DISTRIBUSI BALIK) ---
+    function prosesLunas(id) {
+        const index = loans.findIndex(l => l.id === id);
+        if (index === -1) return;
+        const loan = loans[index];
+        
+        const now = new Date();
+        const created = new Date(loan.dateCreated);
+        let elapsed = Math.ceil((now - created)/(1000*60*60*24)) || 1;
+        let late = Math.ceil((now - new Date(loan.dueDate))/(1000*60*60*24));
+        let admin = (late > 0) ? loan.maxAdmin : Math.min(elapsed * loan.dailyRate, loan.maxAdmin);
+        let denda = (late > 0) ? late * 3000 : 0;
+        let totalReceived = loan.amount + admin + denda;
+        let totalProfit = admin + denda;
+
+        if(confirm(`Lunasi ${loan.name}?\nTotal: ${formatRupiah(totalReceived)}\n(Pokok ${formatRupiah(loan.amount)} + Profit ${formatRupiah(totalProfit)})`)) {
+            
+            // DISTRIBUSI POKOK & PROFIT KE KONTRIBUTOR
+            // Profit dibagi secara proporsional berdasarkan kontribusi pokok
+            
+            let payoutLog = [];
+
+            loan.contributors.forEach(contrib => {
+                // Hitung persentase kontribusi (misal 40k dari 70k)
+                let sharePercentage = contrib.amount / loan.amount;
+                
+                // Balik Pokok
+                let returnPrincipal = contrib.amount;
+                // Balik Profit (Sesuai persentase)
+                let shareProfit = totalProfit * sharePercentage;
+
+                let totalBack = returnPrincipal + shareProfit;
+
+                if (contrib.id === 'owner') {
+                    owner.balance += totalBack;
+                    payoutLog.push(`Owner: +${formatRupiah(totalBack)}`);
+                } else {
+                    const inv = investors.find(i => i.id == contrib.id);
+                    if (inv) {
+                        inv.balance += totalBack;
+                        inv.unsplitProfit += shareProfit;
+                        payoutLog.push(`${inv.name}: +${formatRupiah(totalBack)}`);
+                    } else {
+                        // Jika investor sudah dihapus, uang hangus/masuk owner (fallback)
+                        owner.balance += totalBack;
+                    }
+                }
+            });
+
+            logTransaction('IN', `Pelunasan: ${loan.name}`, totalReceived, loan.name, 'Contributors');
+
+            loans.splice(index, 1);
+            saveAll();
+            renderActiveLoans();
+            updateDashboard();
+        }
+    }
+
+    // --- 7. INVESTASI & BAGI HASIL ---
+    function renderInvestments() {
+        investorContainer.innerHTML = '';
+        if(investors.length === 0) { investorContainer.innerHTML = '<p class="text-muted text-center small">Belum ada investor.</p>'; return; }
+
+        investors.forEach((inv, idx) => {
+            const html = `<div class="card border-info mb-2"><div class="card-body py-2"><div class="d-flex justify-content-between align-items-center mb-2"><span class="fw-bold text-white">${inv.name}</span><div class="text-end"><small class="text-muted d-block" style="font-size:0.6rem">SALDO READY</small><span class="text-info fw-bold">${formatRupiah(inv.balance)}</span></div></div><div class="bg-dark p-2 rounded border border-secondary mb-2"><div class="d-flex justify-content-between align-items-center"><span class="small text-success">Profit Belum Dibagi:</span><span class="fw-bold text-success">${formatRupiah(inv.unsplitProfit)}</span></div></div><div class="row g-1"><div class="col-10"><button onclick="bagiHasil(${idx})" class="btn btn-sm btn-success w-100 fw-bold" ${inv.unsplitProfit <= 0 ? 'disabled' : ''}><i class="fas fa-hand-holding-usd"></i> BAGI HASIL (50:50)</button></div><div class="col-2"><button onclick="hapusInvestor(${idx})" class="btn btn-sm btn-outline-danger w-100"><i class="fas fa-trash"></i></button></div></div></div></div>`;
+            investorContainer.innerHTML += html;
+        });
+        document.getElementById('displayOwnerBalance').innerText = formatRupiah(owner.balance);
+    }
+
+    function bagiHasil(index) {
+        const inv = investors[index];
+        if (inv.unsplitProfit <= 0) return;
+        const totalProfit = inv.unsplitProfit;
+        const splitAmount = totalProfit / 2;
+
+        if(confirm(`BAGI HASIL INVESTOR: ${inv.name}\nTotal Profit: ${formatRupiah(totalProfit)}\n\n50% ke Investor (Tetap)\n50% ke Owner (${formatRupiah(splitAmount)}) - PINDAH\n\nLanjutkan?`)) {
+            if (inv.balance < splitAmount) { alert("Saldo investor kurang (sedang diputar)."); return; }
+            
+            inv.balance -= splitAmount;
+            owner.balance += splitAmount;
+            inv.unsplitProfit = 0;
+
+            logTransaction('OUT', `Bagi Hasil (Masuk Owner): ${inv.name}`, splitAmount, `Saldo ${inv.name}`, 'Saldo Owner');
+
+            saveAll(); renderInvestments(); updateDashboard();
+        }
+    }
+
+    function hapusInvestor(index) { if(confirm("Hapus investor ini?")) { investors.splice(index, 1); saveAll(); renderInvestments(); updateDashboard(); } }
+
+    // --- UTILS ---
+    function updateDashboard() {
+        let invBalance = investors.reduce((acc, curr) => acc + curr.balance, 0);
+        let usedAmount = loans.reduce((acc, curr) => acc + curr.amount, 0);
+        let totalAvailable = owner.balance + invBalance;
+        let realTotalAsset = totalAvailable + usedAmount;
+
+        document.getElementById('dashTotalAsset').innerText = formatRupiah(realTotalAsset);
+        document.getElementById('dashUsed').innerText = formatRupiah(usedAmount);
+        document.getElementById('dashAvailable').innerText = formatRupiah(totalAvailable);
+        document.getElementById('dashOwnerBalance').innerText = formatRupiah(owner.balance + loans.reduce((acc, l) => {
+            let ownCon = l.contributors.find(c => c.id === 'owner');
+            return acc + (ownCon ? ownCon.amount : 0);
+        }, 0));
+        document.getElementById('dashInvestorBalance').innerText = formatRupiah(invBalance + loans.reduce((acc, l) => {
+            let invConTotal = l.contributors.filter(c => c.id !== 'owner').reduce((a, c) => a + c.amount, 0);
+            return acc + invConTotal;
+        }, 0));
+    }
+
     function getLoanConfig(amount) {
         if (amount < 10000) return { error: "Min 10k!" };
         if (amount > 100000) return { error: "Max 100k!" };
-        
         if (amount < 20000) return { admin: 3000, days: 2, dailyRate: 2000 };
         if (amount < 30000) return { admin: 7000, days: 3, dailyRate: 3000 };
         if (amount < 40000) return { admin: 12000, days: 4, dailyRate: 3000 };
         if (amount < 70000) return { admin: 17000, days: 5, dailyRate: 4000 };
         if (amount < 90000) return { admin: 25000, days: 6, dailyRate: 5000 };
         if (amount <= 100000) return { admin: 30000, days: 7, dailyRate: 5000 };
-        
         return { error: "Nominal error." };
     }
 
-    // PREVIEW
     document.getElementById('amount').addEventListener('input', function() {
         const val = parseInt(this.value);
         const previewDiv = document.getElementById('previewBox');
         if (!val) { previewDiv.style.display = 'none'; return; }
         const config = getLoanConfig(val);
-        
         previewDiv.style.display = 'block';
         if (config.error) {
             previewDiv.innerHTML = `<span class="text-danger fw-bold">${config.error}</span>`;
         } else {
-            previewDiv.innerHTML = `
-                <div class="row text-center text-white">
-                    <div class="col-4 border-end border-secondary">
-                        <small class="text-muted d-block">Rate/Hari</small>
-                        <span class="text-warning fw-bold">${formatRupiah(config.dailyRate)}</span>
-                    </div>
-                    <div class="col-4 border-end border-secondary">
-                        <small class="text-muted d-block">Max Admin</small>
-                        <span>${formatRupiah(config.admin)}</span>
-                    </div>
-                    <div class="col-4">
-                        <small class="text-muted d-block">Tempo</small>
-                        <span>${config.days} Hari</span>
-                    </div>
-                </div>`;
+            previewDiv.innerHTML = `<div class="row text-center text-white"><div class="col-4 border-end border-secondary"><small class="text-muted d-block">Rate/Hari</small><span class="text-warning fw-bold">${formatRupiah(config.dailyRate)}</span></div><div class="col-4 border-end border-secondary"><small class="text-muted d-block">Max Admin</small><span>${formatRupiah(config.admin)}</span></div><div class="col-4"><small class="text-muted d-block">Tempo</small><span>${config.days} Hari</span></div></div>`;
         }
     });
-
-    // SUBMIT LOAN
-    document.getElementById('loanForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const name = document.getElementById('borrowerName').value.trim().toUpperCase();
-        const amount = parseInt(document.getElementById('amount').value);
-        let phone = document.getElementById('borrowerPhone').value.trim();
-
-        phone = phone.replace(/\D/g, '');
-        if (phone.startsWith('0')) phone = '62' + phone.substring(1);
-        else if (!phone.startsWith('62')) phone = '62' + phone;
-
-        if (blacklist.includes(name)) { alert(`⛔ ${name} ADA DI BLACKLIST!`); return; }
-        const config = getLoanConfig(amount);
-        if (config.error) { alert(config.error); return; }
-
-        const now = new Date();
-        const dueDate = new Date(now);
-        dueDate.setDate(dueDate.getDate() + config.days);
-
-        loans.push({
-            id: Date.now(),
-            name, phone, amount,
-            maxAdmin: config.admin,
-            dailyRate: config.dailyRate,
-            daysLimit: config.days,
-            dateCreated: now.toISOString(),
-            dueDate: dueDate.toISOString(),
-            status: 'active'
-        });
-
-        saveAll();
-        this.reset();
-        document.getElementById('previewBox').style.display = 'none';
-        showSection('activeSection');
-        alert("✅ Data tersimpan!");
-    });
-
-    // SUBMIT INVESTOR
-    document.getElementById('investForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const name = document.getElementById('investorName').value.trim();
-        const amount = parseInt(document.getElementById('investorAmount').value);
-
-        investors.push({
-            id: Date.now(),
-            name, amount, date: new Date().toISOString()
-        });
-
-        saveAll();
-        this.reset();
-        renderInvestments();
-    });
-
-    // --- 3. RENDER ACTIVE LOANS ---
-    function renderActiveLoans() {
-        activeContainer.innerHTML = '';
-        if (loans.length === 0) {
-            document.getElementById('emptyActiveMsg').style.display = 'block';
-            return;
-        }
-        document.getElementById('emptyActiveMsg').style.display = 'none';
-        const now = new Date();
-
-        loans.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
-
-        loans.forEach(loan => {
-            const dueDate = new Date(loan.dueDate);
-            const createdDate = new Date(loan.dateCreated);
-            let daysElapsed = Math.ceil((now - createdDate) / (1000 * 60 * 60 * 24));
-            if(daysElapsed < 1) daysElapsed = 1;
-            
-            let daysLate = Math.ceil((now - dueDate) / (1000 * 60 * 60 * 24));
-            let currentAdmin = 0, denda = 0, statusBadge = '', cardClass = 'border-secondary';
-
-            if (daysLate > 0) {
-                currentAdmin = loan.maxAdmin;
-                denda = daysLate * 3000;
-                cardClass = 'border-danger';
-                statusBadge = `<span class="badge bg-danger blink-urgent">TELAT ${daysLate} HARI</span>`;
-                if (daysLate > 2 && !blacklist.includes(loan.name)) {
-                    blacklist.push(loan.name);
-                    saveAll();
-                    renderBlacklist();
-                }
-            } else {
-                currentAdmin = Math.min(daysElapsed * loan.dailyRate, loan.maxAdmin);
-                statusBadge = `<span class="badge bg-success">HARI KE-${daysElapsed}</span>`;
-            }
-
-            const totalBayar = loan.amount + currentAdmin + denda;
-
-            const html = `
-            <div class="card ${cardClass} mb-3">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div>
-                            <h5 class="fw-bold mb-0 text-white">${loan.name}</h5>
-                            <small class="text-muted"><i class="fab fa-whatsapp"></i> +${loan.phone}</small>
-                        </div>
-                        ${statusBadge}
-                    </div>
-                    <div class="bg-dark p-2 rounded border border-secondary mb-3">
-                        <div class="d-flex justify-content-between small text-muted"><span>Pokok</span> <span>${formatRupiah(loan.amount)}</span></div>
-                        <div class="d-flex justify-content-between small text-info"><span>Admin</span> <span>${formatRupiah(currentAdmin)}</span></div>
-                        ${denda > 0 ? `<div class="d-flex justify-content-between small text-danger fw-bold"><span>Denda</span> <span>${formatRupiah(denda)}</span></div>` : ''}
-                        <div class="border-top border-secondary mt-1 pt-1 d-flex justify-content-between fw-bold text-white fs-5"><span>TOTAL</span> <span>${formatRupiah(totalBayar)}</span></div>
-                    </div>
-                    <div class="row g-2">
-                        <div class="col-6"><button onclick="kirimWA('${loan.name}', '${loan.phone}', ${loan.amount}, ${currentAdmin}, ${denda}, ${totalBayar}, ${daysLate})" class="btn btn-outline-success w-100 fw-bold"><i class="fab fa-whatsapp"></i> TAGIH</button></div>
-                        <div class="col-6"><button onclick="prosesLunas(${loan.id})" class="btn btn-primary w-100 fw-bold"><i class="fas fa-check"></i> LUNAS</button></div>
-                    </div>
-                </div>
-            </div>`;
-            activeContainer.innerHTML += html;
-        });
-        renderBlacklist();
-    }
-
-    // --- 4. RENDER HISTORY & EDIT FITUR ---
-    function renderHistory() {
-        historyContainer.innerHTML = '';
-        let totalRev = 0, totalProfit = 0;
-        
-        if (history.length === 0) {
-            document.getElementById('emptyHistoryMsg').style.display = 'block';
-            return;
-        }
-        document.getElementById('emptyHistoryMsg').style.display = 'none';
-
-        history.sort((a, b) => new Date(b.datePaid) - new Date(a.datePaid));
-        let currentDateGroup = null;
-
-        history.forEach(item => {
-            totalRev += item.totalPaid;
-            totalProfit += (item.totalPaid - item.amount);
-
-            const dateStr = new Date(item.datePaid).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-            if (currentDateGroup !== dateStr) {
-                historyContainer.innerHTML += `<div class="history-date-header"><span>${dateStr}</span></div>`;
-                currentDateGroup = dateStr;
-            }
-
-            const profitItem = item.totalPaid - item.amount;
-            
-            historyContainer.innerHTML += `
-            <div class="card mb-2 border-0 bg-dark border-bottom border-secondary" style="border-radius: 0;">
-                <div class="card-body py-2 px-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="fw-bold text-white">${item.name}</span>
-                        <div>
-                            <span class="text-success fw-bold me-2">+${formatRupiah(profitItem)}</span>
-                            <button onclick="editHistory(${item.id})" class="btn btn-sm btn-outline-light border-0"><i class="fas fa-pen"></i></button>
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-between small text-muted">
-                        <span>Pinjam: ${formatRupiah(item.amount)}</span>
-                        <span>Total Terima: ${formatRupiah(item.totalPaid)}</span>
-                    </div>
-                </div>
-            </div>`;
-        });
-
-        document.getElementById('totalRevenue').innerText = formatRupiah(totalRev);
-        document.getElementById('netProfit').innerText = formatRupiah(totalProfit);
-    }
-
-    // FITUR EDIT RIWAYAT (DIIKHLASIN DLL)
-    function editHistory(id) {
-        const index = history.findIndex(h => h.id === id);
-        if (index === -1) return;
-        const item = history[index];
-        
-        const newPaid = prompt(`Total terima sebelumnya: ${item.totalPaid}\nMasukkan jumlah baru (misal diikhlasin 1000):`, item.totalPaid);
-        
-        if (newPaid !== null && newPaid !== "") {
-            const parsed = parseInt(newPaid);
-            if (!isNaN(parsed)) {
-                history[index].totalPaid = parsed;
-                // Recalculate finals if needed, but simple overwrite is enough for display
-                saveAll();
-                renderHistory();
-            }
-        }
-    }
-
-    // --- 5. RENDER INVESTMENTS ---
-    function renderInvestments() {
-        investorContainer.innerHTML = '';
-        let totalCapital = 0;
-        
-        investors.forEach(inv => totalCapital += inv.amount);
-
-        // Hitung Global Profit dari History
-        let globalNetProfit = 0;
-        history.forEach(h => globalNetProfit += (h.totalPaid - h.amount));
-
-        // Share Investor = 50% dari Global Profit
-        // Jika Profit minus/0, share 0
-        const investorShareTotal = globalNetProfit > 0 ? globalNetProfit * 0.5 : 0;
-
-        document.getElementById('totalCapitalDisplay').innerText = formatRupiah(totalCapital);
-        document.getElementById('investorShareDisplay').innerText = formatRupiah(investorShareTotal);
-
-        if(investors.length === 0) {
-            investorContainer.innerHTML = '<p class="text-muted text-center small">Belum ada investor.</p>';
-        } else {
-            investors.forEach((inv, idx) => {
-                const html = `
-                <div class="d-flex justify-content-between align-items-center border-bottom border-secondary py-2">
-                    <div>
-                        <div class="text-white fw-bold">${inv.name}</div>
-                        <small class="text-muted">${new Date(inv.date).toLocaleDateString()}</small>
-                    </div>
-                    <div class="text-end">
-                        <div class="text-info fw-bold">${formatRupiah(inv.amount)}</div>
-                        <button onclick="hapusInvestor(${idx})" class="btn btn-sm text-danger p-0"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>`;
-                investorContainer.innerHTML += html;
-            });
-        }
-    }
-
-    function hapusInvestor(index) {
-        if(confirm("Hapus data investor ini?")) {
-            investors.splice(index, 1);
-            saveAll();
-            renderInvestments();
-        }
-    }
-
-    // --- UTILS ---
-    function prosesLunas(id) {
-        const index = loans.findIndex(l => l.id === id);
-        if (index === -1) return;
-        const loan = loans[index];
-        
-        // Kalkulasi Akhir
-        const now = new Date();
-        const created = new Date(loan.dateCreated);
-        let elapsed = Math.ceil((now - created)/(1000*60*60*24)) || 1;
-        let late = Math.ceil((now - new Date(loan.dueDate))/(1000*60*60*24));
-        
-        let admin = (late > 0) ? loan.maxAdmin : Math.min(elapsed * loan.dailyRate, loan.maxAdmin);
-        let denda = (late > 0) ? late * 3000 : 0;
-        let total = loan.amount + admin + denda;
-
-        if(confirm(`Lunasi ${loan.name}?\nTotal: ${formatRupiah(total)}`)) {
-            history.push({
-                ...loan, datePaid: new Date().toISOString(),
-                finalAdmin: admin, finalDenda: denda, totalPaid: total, status: 'paid'
-            });
-            loans.splice(index, 1);
-            saveAll();
-            renderActiveLoans();
-        }
-    }
 
     function kirimWA(name, phone, pokok, admin, denda, total, late) {
-        let msg = (late > 0) 
-            ? `WOI *${name}*! 😡\nTelat *${late} hari*.\nTotal: *${formatRupiah(total)}*.\nBayar sekarang!`
-            : `Halo *${name}*, reminder utang.\nTotal: *${formatRupiah(total)}*.\nMakasih.`;
+        let msg = (late > 0) ? `WOI *${name}*! 😡\nTelat *${late} hari*.\nTotal: *${formatRupiah(total)}*.\nBayar sekarang!` : `Halo *${name}*, reminder utang.\nTotal: *${formatRupiah(total)}*.\nMakasih.`;
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
-    function renderBlacklist() {
-        const list = document.getElementById('blacklistList');
-        const area = document.getElementById('blacklistArea');
-        list.innerHTML = '';
-        if(blacklist.length > 0) {
-            area.style.display = 'block';
-            blacklist.forEach(n => {
-                list.innerHTML += `<li class="list-group-item bg-dark text-danger border-secondary d-flex justify-content-between"><span>${n}</span><button class="btn btn-sm btn-outline-secondary" onclick="hapusBL('${n}')">X</button></li>`;
-            });
-        } else { area.style.display = 'none'; }
-    }
-
-    function hapusBL(name) {
-        blacklist = blacklist.filter(n => n !== name);
-        saveAll();
-        renderBlacklist();
-    }
-
-    function resetData() {
-        if(confirm("Hapus SEMUA data?")) {
-            localStorage.clear();
-            location.reload();
-        }
-    }
-
+    function resetData() { if(confirm("RESET TOTAL (Hapus Semua)?")) { localStorage.clear(); location.reload(); } }
+    
     function saveAll() {
-        localStorage.setItem('active_loans', JSON.stringify(loans));
-        localStorage.setItem('history_loans', JSON.stringify(history));
-        localStorage.setItem('blacklist_users', JSON.stringify(blacklist));
-        localStorage.setItem('investors_db', JSON.stringify(investors));
+        localStorage.setItem('loans_v5', JSON.stringify(loans));
+        localStorage.setItem('transactions_v5', JSON.stringify(transactions));
+        localStorage.setItem('blacklist_v5', JSON.stringify(blacklist));
+        localStorage.setItem('investors_v5', JSON.stringify(investors));
+        localStorage.setItem('owner_v5', JSON.stringify(owner));
     }
 
     function formatRupiah(num) { return "Rp " + num.toLocaleString('id-ID'); }
 
     // Init
-    renderActiveLoans();
-    renderBlacklist();
+    renderSourceCheckboxes();
+    updateDashboard();
+    showSection('dashboardSection', document.querySelector('.nav-link.active'));
 </script>
 </body>
 </html>

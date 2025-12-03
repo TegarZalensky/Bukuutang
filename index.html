@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Debt Manager Ultimate V6 (Cicilan & Admin First)</title>
+    <title>Debt Manager Ultimate V6.1 (Force Lunas & Delete)</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -83,7 +83,7 @@
                 <a class="nav-link" href="#" onclick="showSection('historySection', this)"><i class="fas fa-history"></i> Log Transaksi</a>
                 <a class="nav-link" href="#" onclick="showSection('investSection', this)"><i class="fas fa-coins"></i> Kelola Dana</a>
                 <hr class="border-secondary">
-                <div class="text-center text-muted small mt-4">V6.0 - Cicilan System</div>
+                <div class="text-center text-muted small mt-4">V6.1 - Force Lunas</div>
             </nav>
         </div>
     </div>
@@ -326,6 +326,16 @@
                             <button type="button" class="btn btn-sm btn-outline-secondary" onclick="fillPayAmount('admin')">Bayar Admin Aja</button>
                             <button type="button" class="btn btn-sm btn-outline-secondary" onclick="fillPayAmount('full')">Lunas Semua</button>
                         </div>
+                    </div>
+
+                    <div class="mb-3 pt-2 border-top border-secondary">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="forceFinishCheck">
+                            <label class="form-check-label text-warning fw-bold" for="forceFinishCheck">
+                                Anggap Lunas (Selesaikan)
+                            </label>
+                        </div>
+                        <div class="form-text text-muted small">Centang jika ini pelunasan terakhir (walau nominal kurang/diskon).</div>
                     </div>
                 </div>
                 <div class="modal-footer border-secondary">
@@ -624,7 +634,13 @@
             <div class="card ${cardClass} mb-3">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div><h5 class="fw-bold mb-0 text-white">${loan.name}</h5><small class="text-muted"><i class="fab fa-whatsapp"></i> +${loan.phone}</small></div>${statusBadge}
+                        <div><h5 class="fw-bold mb-0 text-white">${loan.name}</h5><small class="text-muted"><i class="fab fa-whatsapp"></i> +${loan.phone}</small></div>
+                        <div class="text-end">
+                            ${statusBadge}
+                            <div class="mt-1">
+                                <button onclick="deleteLoan(${loan.id})" class="btn btn-sm btn-link text-danger p-0" style="text-decoration:none;"><i class="fas fa-trash"></i> Hapus</button>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="bg-dark p-2 rounded border border-secondary mb-3">
@@ -657,34 +673,6 @@
                     </div>
                 </div>
             </div>`;
-        });
-    }
-
-    function transferDana(phone, amount) {
-        let cleanPhone = phone.replace(/\D/g, '');
-        if (!cleanPhone.startsWith('62') && !cleanPhone.startsWith('0')) { cleanPhone = '0' + cleanPhone; }
-        navigator.clipboard.writeText(cleanPhone).then(() => {
-            if(confirm(`Nomor ${cleanPhone} sudah dicopy!\n\nKarena kebijakan keamanan DANA, 'Auto-Isi' sering diblokir. Silakan PASTE nomornya manual.\n\nBuka aplikasi DANA sekarang?`)) {
-                window.location.href = "https://link.dana.id/sendmoney";
-            }
-        }, () => {
-            prompt("Gagal copy otomatis. Copy nomor ini manual:", cleanPhone);
-            window.location.href = "https://link.dana.id/sendmoney";
-        });
-    }
-
-    function renderTransactions(filterType) {
-        transactionContainer.innerHTML = '';
-        const filtered = transactions.filter(t => filterType === 'in' ? t.type === 'IN' : t.type === 'OUT');
-        if (filtered.length === 0) { transactionContainer.innerHTML = '<p class="text-center text-muted py-5">Belum ada data transaksi ini.</p>'; return; }
-        filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-        filtered.forEach(log => {
-            const dateObj = new Date(log.timestamp);
-            const dateStr = dateObj.toLocaleDateString('id-ID');
-            const timeStr = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute:'2-digit' });
-            const logClass = log.type === 'IN' ? 'log-in' : 'log-out';
-            const html = `<div class="card mb-2 border-0 bg-dark border-bottom border-secondary rounded-0 ${logClass}"><div class="card-body py-2 px-3"><div class="d-flex justify-content-between align-items-center"><span class="fw-bold text-white small">${log.description}</span><span class="${log.type==='IN'?'text-success':'text-danger'} fw-bold">${log.type==='IN'?'+':'-'}${formatRupiah(log.amount)}</span></div><div class="d-flex justify-content-between align-items-center mt-1"><span class="log-date"><i class="far fa-clock"></i> ${dateStr} ${timeStr}</span><span class="log-date text-end">From: ${log.from} <i class="fas fa-long-arrow-alt-right"></i> To: ${log.to}</span></div></div></div>`;
-            transactionContainer.innerHTML += html;
         });
     }
 
@@ -728,6 +716,9 @@
         document.getElementById('payLoanId').value = id;
         document.getElementById('payAmount').value = "";
         
+        // Reset Checkbox
+        document.getElementById('forceFinishCheck').checked = false;
+        
         if (late > 0) {
             document.getElementById('payLateText').innerText = `⚠️ Telat ${late} Hari (Denda ${formatRupiah(denda)})`;
         } else {
@@ -742,11 +733,24 @@
         if(type === 'full') document.getElementById('payAmount').value = currentRemainingVal;
     }
 
+    function deleteLoan(id) {
+        if(confirm("⚠ Hapus data utang ini secara permanen? (Data hilang, tidak masuk riwayat, saldo tidak kembali)")) {
+            const index = loans.findIndex(l => l.id === id);
+            if(index > -1) {
+                loans.splice(index, 1);
+                saveAll();
+                renderActiveLoans();
+                updateDashboard();
+            }
+        }
+    }
+
     function submitPayment() {
         const amount = parseInt(document.getElementById('payAmount').value);
         if(!amount || amount <= 0) { alert("Masukkan nominal yang valid!"); return; }
         
         const type = document.querySelector('input[name="payType"]:checked').value;
+        const forceFinish = document.getElementById('forceFinishCheck').checked;
         const loanIndex = loans.findIndex(l => l.id === currentPayLoanId);
         if(loanIndex === -1) return;
         
@@ -756,31 +760,21 @@
         if(typeof loan.paidAmount === 'undefined') loan.paidAmount = 0;
         loan.paidAmount += amount;
 
-        // DISTRIBUTE FUNDS
-        // Logic:
-        // If Type = Principal -> Return to Contributors' Balance
-        // If Type = Profit -> Add to Profit (Unsplit) or Owner Balance (Profit share)
-        
-        // Simplified Logic:
-        // Profit payments ALSO go to balance (cash is cash), but we tag it for profit distribution.
-        
         let logDesc = "";
 
         if (type === 'profit') {
             logDesc = `Bayar Admin/Denda: ${loan.name}`;
-            // Distribusi Profit (50:50 logic, or just hold in unsplit?)
-            // Let's assume profit payment is split proportionally based on contribution
             loan.contributors.forEach(contrib => {
                 let sharePct = contrib.amount / loan.amount;
                 let shareAmt = amount * sharePct;
                 
                 if(contrib.id === 'owner') {
-                    owner.balance += shareAmt; // Owner profit just sits in balance
+                    owner.balance += shareAmt; 
                 } else {
                     const inv = investors.find(i => i.id == contrib.id);
                     if(inv) {
-                        inv.balance += shareAmt; // Cash back to balance
-                        inv.unsplitProfit += shareAmt; // Track as profit to be split later
+                        inv.balance += shareAmt; 
+                        inv.unsplitProfit += shareAmt; 
                     } else {
                         owner.balance += shareAmt;
                     }
@@ -788,7 +782,6 @@
             });
         } else {
             logDesc = `Cicilan Pokok: ${loan.name}`;
-            // Return Principal to Balance
             loan.contributors.forEach(contrib => {
                 let sharePct = contrib.amount / loan.amount;
                 let shareAmt = amount * sharePct;
@@ -805,8 +798,7 @@
 
         logTransaction('IN', logDesc, amount, loan.name, 'System/Investors');
 
-        // Check if Fully Paid
-        // Recalculate Total Bill to be sure
+        // Check if Fully Paid or Forced
         const now = new Date();
         const createdDate = new Date(loan.dateCreated);
         let elapsed = Math.ceil((now - createdDate) / (1000 * 60 * 60 * 24)) || 1;
@@ -815,9 +807,8 @@
         let denda = (late > 0) ? late * 3000 : 0;
         let totalBill = loan.amount + admin + denda;
 
-        if (loan.paidAmount >= totalBill) {
-            alert("🎉 LUNAS! Utang ini sudah selesai.");
-            // Move to history
+        if (loan.paidAmount >= totalBill || forceFinish) {
+            alert("🎉 LUNAS! Utang ini sudah selesai dan dipindah ke riwayat.");
              history.push({
                 ...loan, datePaid: new Date().toISOString(),
                 finalAdmin: admin, finalDenda: denda, totalPaid: loan.paidAmount
@@ -831,6 +822,34 @@
         paymentModal.hide();
         renderActiveLoans();
         updateDashboard();
+    }
+
+    function transferDana(phone, amount) {
+        let cleanPhone = phone.replace(/\D/g, '');
+        if (!cleanPhone.startsWith('62') && !cleanPhone.startsWith('0')) { cleanPhone = '0' + cleanPhone; }
+        navigator.clipboard.writeText(cleanPhone).then(() => {
+            if(confirm(`Nomor ${cleanPhone} sudah dicopy!\n\nKarena kebijakan keamanan DANA, 'Auto-Isi' sering diblokir. Silakan PASTE nomornya manual.\n\nBuka aplikasi DANA sekarang?`)) {
+                window.location.href = "https://link.dana.id/sendmoney";
+            }
+        }, () => {
+            prompt("Gagal copy otomatis. Copy nomor ini manual:", cleanPhone);
+            window.location.href = "https://link.dana.id/sendmoney";
+        });
+    }
+
+    function renderTransactions(filterType) {
+        transactionContainer.innerHTML = '';
+        const filtered = transactions.filter(t => filterType === 'in' ? t.type === 'IN' : t.type === 'OUT');
+        if (filtered.length === 0) { transactionContainer.innerHTML = '<p class="text-center text-muted py-5">Belum ada data transaksi ini.</p>'; return; }
+        filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        filtered.forEach(log => {
+            const dateObj = new Date(log.timestamp);
+            const dateStr = dateObj.toLocaleDateString('id-ID');
+            const timeStr = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute:'2-digit' });
+            const logClass = log.type === 'IN' ? 'log-in' : 'log-out';
+            const html = `<div class="card mb-2 border-0 bg-dark border-bottom border-secondary rounded-0 ${logClass}"><div class="card-body py-2 px-3"><div class="d-flex justify-content-between align-items-center"><span class="fw-bold text-white small">${log.description}</span><span class="${log.type==='IN'?'text-success':'text-danger'} fw-bold">${log.type==='IN'?'+':'-'}${formatRupiah(log.amount)}</span></div><div class="d-flex justify-content-between align-items-center mt-1"><span class="log-date"><i class="far fa-clock"></i> ${dateStr} ${timeStr}</span><span class="log-date text-end">From: ${log.from} <i class="fas fa-long-arrow-alt-right"></i> To: ${log.to}</span></div></div></div>`;
+            transactionContainer.innerHTML += html;
+        });
     }
 
     function renderInvestments() {
@@ -861,44 +880,13 @@
     function updateDashboard() {
         let invBalance = investors.reduce((acc, curr) => acc + curr.balance, 0);
         
-        // Calculate USED Amount correctly (Total Loan - Total Paid Partial)
         let usedAmount = loans.reduce((acc, curr) => acc + (curr.amount - (curr.paidAmount || 0)), 0); 
-        // Note: paidAmount includes admin/profit payments too, so this is an approximation of "Outstanding Cash".
-        // A better approximation for "Money Out" is strictly Loan Amount - Principal Repaid. 
-        // But for simplicity in V6, we use the raw remaining balance logic or stick to V5 logic:
-        // V5 logic: Used = Total Loan Amounts.
-        // V6 logic: When partial payment happens, money goes BACK to balance. So 'Available' increases immediately.
-        // Therefore 'Total Asset' = Available + Outstanding Loans.
-        
-        let outstandingPrincipal = loans.reduce((acc, curr) => acc + curr.amount, 0); 
-        // Wait, if they pay principal, we should probably reduce the tracked amount? 
-        // No, we tracked contributions. In submitPayment we returned money to balance.
-        // So Balance is accurate.
-        // We just need to display "Dipinjam Orang" as the total outstanding principal?
-        // Let's keep it simple: Total Asset = Owner Balance + Investor Balance + Outstanding Loans.
-        // Since we returned money to balance on partial payment, Outstanding Loans should functionally decrease?
-        // Actually, in `submitPayment`, we add to `balance`. So the money is in `balance`.
-        // So `dashUsed` should represent money that is NOT in balance but is expected to come back (Principal).
-        // Since we didn't track "Principal Remaining" strictly in database, let's just show Total Asset.
+        let simpleUsed = loans.reduce((acc, curr) => acc + curr.amount, 0); 
         
         let totalAvailable = owner.balance + invBalance;
         
         document.getElementById('dashAvailable').innerText = formatRupiah(totalAvailable);
-        
-        // Fix Asset Calculation for V6
-        // Asset = Uang di Tangan (Available) + Uang di Luar (Outstanding Principal)
-        // Outstanding Principal = Initial Loan - Principal Repaid.
-        // Since we don't strictly track Principal Repaid vs Profit Repaid in the loan object structure easily without complex logic,
-        // Let's rely on: Asset = Initial Capital + Profit Realized.
-        // But "Profit Realized" is hard to track globally.
-        // Simplest: Just sum Owner Balance + Investor Balance + Sum(Active Loans Remaining Principal).
-        // Approximation: Sum(Active Loans Amount) - (Sum(Active Loans Paid) * maybe?)
-        // Let's stick to V5 logic for visual consistency: Used = Sum of Loan Amounts.
-        // (Even if partially paid, the loan is still "Active").
-        let simpleUsed = loans.reduce((acc, curr) => acc + curr.amount, 0); 
         document.getElementById('dashUsed').innerText = formatRupiah(simpleUsed);
-        
-        // Total Asset = Available + Simple Used (Roughly).
         document.getElementById('dashTotalAsset').innerText = formatRupiah(totalAvailable + simpleUsed);
 
         document.getElementById('dashOwnerBalance').innerText = formatRupiah(owner.balance);

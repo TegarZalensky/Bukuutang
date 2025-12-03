@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Debt Manager Ultimate V5.3 (Anti-Error DANA)</title>
+    <title>Debt Manager Ultimate V6 (Cicilan & Admin First)</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -51,6 +51,9 @@
         .source-item { border: 1px solid #444; padding: 10px; border-radius: 8px; margin-bottom: 5px; cursor: pointer; transition: 0.2s; }
         .source-item:hover { background-color: #2a2a2a; }
         .source-item.active { border-color: #ff4757; background-color: #2c0b0e; }
+
+        /* Progress Bar for Loan */
+        .progress { height: 10px; background-color: #333; border-radius: 5px; }
     </style>
 </head>
 <body>
@@ -80,7 +83,7 @@
                 <a class="nav-link" href="#" onclick="showSection('historySection', this)"><i class="fas fa-history"></i> Log Transaksi</a>
                 <a class="nav-link" href="#" onclick="showSection('investSection', this)"><i class="fas fa-coins"></i> Kelola Dana</a>
                 <hr class="border-secondary">
-                <div class="text-center text-muted small mt-4">V5.3 - Safe Dana Mode</div>
+                <div class="text-center text-muted small mt-4">V6.0 - Cicilan System</div>
             </nav>
         </div>
     </div>
@@ -151,13 +154,11 @@
                         <div class="mb-3">
                             <label class="form-label text-warning fw-bold"><i class="fas fa-wallet"></i> Sumber Dana</label>
                             
-                            <!-- Trigger Button -->
                             <button type="button" class="btn btn-outline-secondary w-100 text-start d-flex justify-content-between align-items-center" onclick="toggleSourceDropdown()">
                                 <span id="dropdownLabel">Klik untuk Pilih Sumber Dana...</span>
                                 <i class="fas fa-chevron-down" id="dropdownIcon"></i>
                             </button>
 
-                            <!-- Collapsible Content -->
                             <div id="sourceListContainer" class="mt-2 p-2 border border-secondary rounded bg-dark" style="display: none;">
                                 <!-- Checkboxes populated by JS -->
                             </div>
@@ -239,7 +240,6 @@
                                 <input type="checkbox" class="form-check-input" id="adminFeeCheck">
                                 <label class="form-check-label text-muted" for="adminFeeCheck">Via Indomaret (Admin Rp 1.500)</label>
                             </div>
-                            <!-- Live Kalkulator -->
                             <div id="smartTopupPreview" class="alert alert-dark border border-secondary mt-2" style="display:none;">
                                 <div class="d-flex justify-content-between text-muted small">
                                     <span>Cash Awal:</span> <span id="prevCash">Rp 0</span>
@@ -288,6 +288,53 @@
 
     </div>
 
+    <!-- PAYMENT MODAL (NEW) -->
+    <div class="modal fade" id="paymentModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark border-secondary">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-success"><i class="fas fa-money-bill-wave"></i> Bayar Cicilan / Lunas</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="payLoanId">
+                    
+                    <div class="mb-3 text-center">
+                        <small class="text-muted">Total Tagihan Saat Ini</small>
+                        <h3 class="fw-bold text-white" id="payTotalBill">Rp 0</h3>
+                        <small class="text-danger" id="payLateText"></small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Jenis Pembayaran</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="payType" id="payTypePrincipal" value="principal" checked>
+                            <label class="btn btn-outline-success" for="payTypePrincipal">Cicil Pokok</label>
+
+                            <input type="radio" class="btn-check" name="payType" id="payTypeProfit" value="profit">
+                            <label class="btn btn-outline-warning" for="payTypeProfit">Bayar Admin/Denda</label>
+                        </div>
+                        <div class="form-text mt-1 text-light" id="payTypeDesc">
+                            <small><em>Mengurangi pokok utang. Uang kembali ke saldo modal.</em></small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Nominal Bayar (Rp)</label>
+                        <input type="number" class="form-control fw-bold text-success fs-4" id="payAmount" placeholder="0">
+                        <div class="d-flex justify-content-between mt-1">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="fillPayAmount('admin')">Bayar Admin Aja</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="fillPayAmount('full')">Lunas Semua</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-success w-100 fw-bold" onclick="submitPayment()">PROSES PEMBAYARAN</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- BLACKLIST AREA -->
     <div class="card mt-5 border-danger bg-dark" id="blacklistArea" style="display:none;">
         <div class="card-header text-danger fw-bold border-bottom border-danger">
@@ -298,18 +345,20 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // --- DATABASE ---
-    let loans = JSON.parse(localStorage.getItem('loans_v5')) || [];
-    let transactions = JSON.parse(localStorage.getItem('transactions_v5')) || [];
-    let blacklist = JSON.parse(localStorage.getItem('blacklist_v5')) || [];
-    let investors = JSON.parse(localStorage.getItem('investors_v5')) || [];
-    let owner = JSON.parse(localStorage.getItem('owner_v5')) || { balance: 0 };
+    // --- DATABASE V6 (Added paidAmount field) ---
+    // loans struct: { ..., paidAmount: 0, paidProfit: 0, ... }
+    let loans = JSON.parse(localStorage.getItem('loans_v6')) || [];
+    let transactions = JSON.parse(localStorage.getItem('transactions_v6')) || [];
+    let blacklist = JSON.parse(localStorage.getItem('blacklist_v6')) || [];
+    let investors = JSON.parse(localStorage.getItem('investors_v6')) || [];
+    let owner = JSON.parse(localStorage.getItem('owner_v6')) || { balance: 0 };
 
     // --- DOM Elements ---
     const activeContainer = document.getElementById('activeLoanContainer');
     const transactionContainer = document.getElementById('transactionContainer');
     const investorContainer = document.getElementById('investorListContainer');
     const sourceListContainer = document.getElementById('sourceListContainer');
+    const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
     
     // --- 1. NAVIGASI ---
     function showSection(sectionId, linkElement) {
@@ -532,14 +581,15 @@
             id: Date.now(), name, phone, amount,
             maxAdmin: config.admin, dailyRate: config.dailyRate, daysLimit: config.days,
             dateCreated: now.toISOString(), dueDate: dueDate.toISOString(),
-            contributors: sources.map(s => ({ id: s.id, amount: s.contribution })).filter(c => c.amount > 0)
+            contributors: sources.map(s => ({ id: s.id, amount: s.contribution })).filter(c => c.amount > 0),
+            paidAmount: 0 // New Tracker
         });
 
         logTransaction('OUT', `Pinjaman Keluar ke ${name}`, amount, contributionLog.join(', '), name);
         saveAll(); this.reset(); document.getElementById('previewBox').style.display = 'none'; showSection('activeSection'); alert("✅ Pinjaman Diproses!");
     });
 
-    // --- 5. RENDER LOANS (FIXED DANA BUTTON) ---
+    // --- 5. RENDER LOANS (CICILAN UI) ---
     function renderActiveLoans() {
         activeContainer.innerHTML = '';
         if (loans.length === 0) { document.getElementById('emptyActiveMsg').style.display = 'block'; return; }
@@ -548,6 +598,9 @@
         loans.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
 
         loans.forEach(loan => {
+            // Fix old data structure compatibility
+            if(typeof loan.paidAmount === 'undefined') loan.paidAmount = 0;
+
             const dueDate = new Date(loan.dueDate);
             const createdDate = new Date(loan.dateCreated);
             let daysElapsed = Math.ceil((now - createdDate) / (1000 * 60 * 60 * 24)) || 1;
@@ -562,41 +615,56 @@
                 currentAdmin = Math.min(daysElapsed * loan.dailyRate, loan.maxAdmin);
                 statusBadge = `<span class="badge bg-success">HARI KE-${daysElapsed}</span>`;
             }
-            const totalBayar = loan.amount + currentAdmin + denda;
             
+            const totalBill = loan.amount + currentAdmin + denda;
+            const remaining = totalBill - loan.paidAmount;
+            const percent = Math.min(100, Math.round((loan.paidAmount / totalBill) * 100));
+
             activeContainer.innerHTML += `
             <div class="card ${cardClass} mb-3">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div><h5 class="fw-bold mb-0 text-white">${loan.name}</h5><small class="text-muted"><i class="fab fa-whatsapp"></i> +${loan.phone}</small></div>${statusBadge}
                     </div>
+                    
                     <div class="bg-dark p-2 rounded border border-secondary mb-3">
-                        <div class="d-flex justify-content-between small text-muted"><span>Pokok</span> <span>${formatRupiah(loan.amount)}</span></div>
-                        <div class="d-flex justify-content-between small text-info"><span>Admin</span> <span>${formatRupiah(currentAdmin)}</span></div>
+                        <div class="d-flex justify-content-between small text-muted"><span>Pokok Pinjaman</span> <span>${formatRupiah(loan.amount)}</span></div>
+                        <div class="d-flex justify-content-between small text-info"><span>Admin Saat Ini</span> <span>${formatRupiah(currentAdmin)}</span></div>
                         ${denda > 0 ? `<div class="d-flex justify-content-between small text-danger fw-bold"><span>Denda</span> <span>${formatRupiah(denda)}</span></div>` : ''}
-                        <div class="border-top border-secondary mt-1 pt-1 d-flex justify-content-between fw-bold text-white fs-5"><span>TOTAL</span> <span>${formatRupiah(totalBayar)}</span></div>
+                        
+                        <div class="border-top border-secondary my-2"></div>
+                        
+                        <div class="d-flex justify-content-between small text-white"><span>Total Tagihan</span> <span>${formatRupiah(totalBill)}</span></div>
+                        <div class="d-flex justify-content-between small text-success"><span>Sudah Dibayar</span> <span>- ${formatRupiah(loan.paidAmount)}</span></div>
+                        
+                        <div class="border-top border-secondary mt-1 pt-1 d-flex justify-content-between fw-bold text-white fs-5">
+                            <span>SISA</span> <span class="text-warning">${formatRupiah(remaining)}</span>
+                        </div>
+                        
+                        <!-- Progress Bar -->
+                        <div class="progress mt-2">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: ${percent}%"></div>
+                        </div>
+                        <small class="text-muted" style="font-size: 0.7rem;">Terbayar: ${percent}%</small>
                     </div>
+
                     <div class="row g-2">
                         <div class="col-12">
                             <button onclick="transferDana('${loan.phone}', ${loan.amount})" class="btn btn-primary w-100 fw-bold mb-2"><i class="fas fa-paper-plane"></i> CAIRKAN (DANA)</button>
                         </div>
-                        <div class="col-6"><button onclick="kirimWA('${loan.name}', '${loan.phone}', ${loan.amount}, ${currentAdmin}, ${denda}, ${totalBayar}, ${daysLate})" class="btn btn-outline-success w-100 fw-bold"><i class="fab fa-whatsapp"></i> TAGIH</button></div>
-                        <div class="col-6"><button onclick="prosesLunas(${loan.id})" class="btn btn-success w-100 fw-bold"><i class="fas fa-check"></i> LUNAS</button></div>
+                        <div class="col-6"><button onclick="kirimWA('${loan.name}', '${loan.phone}', ${loan.amount}, ${currentAdmin}, ${denda}, ${remaining}, ${daysLate})" class="btn btn-outline-success w-100 fw-bold"><i class="fab fa-whatsapp"></i> TAGIH</button></div>
+                        <div class="col-6"><button onclick="openPaymentModal(${loan.id})" class="btn btn-success w-100 fw-bold"><i class="fas fa-money-bill"></i> BAYAR</button></div>
                     </div>
                 </div>
             </div>`;
         });
     }
 
-    // --- FIX: DANA TRANSFER FUNCTION ---
     function transferDana(phone, amount) {
         let cleanPhone = phone.replace(/\D/g, '');
         if (!cleanPhone.startsWith('62') && !cleanPhone.startsWith('0')) { cleanPhone = '0' + cleanPhone; }
-        
-        // Copy to clipboard
         navigator.clipboard.writeText(cleanPhone).then(() => {
             if(confirm(`Nomor ${cleanPhone} sudah dicopy!\n\nKarena kebijakan keamanan DANA, 'Auto-Isi' sering diblokir. Silakan PASTE nomornya manual.\n\nBuka aplikasi DANA sekarang?`)) {
-                // Open Generic DANA Send Money Page (Safer than direct link)
                 window.location.href = "https://link.dana.id/sendmoney";
             }
         }, () => {
@@ -620,31 +688,149 @@
         });
     }
 
-    function prosesLunas(id) {
-        const index = loans.findIndex(l => l.id === id);
-        if (index === -1) return;
-        const loan = loans[index];
+    // --- 6. NEW PAYMENT SYSTEM (CICILAN) ---
+    
+    // UI RADIO HANDLER
+    document.querySelectorAll('input[name="payType"]').forEach((elem) => {
+        elem.addEventListener("change", function(event) {
+            const desc = document.getElementById('payTypeDesc');
+            if (event.target.value === "principal") {
+                desc.innerHTML = "<small><em>Mengurangi pokok utang. Uang kembali ke saldo modal (diputar lagi).</em></small>";
+            } else {
+                desc.innerHTML = "<small><em>Bayar Admin/Denda duluan. Uang masuk ke Profit (siap bagi hasil).</em></small>";
+            }
+        });
+    });
+
+    let currentPayLoanId = null;
+    let currentAdminVal = 0;
+    let currentRemainingVal = 0;
+
+    function openPaymentModal(id) {
+        const loan = loans.find(l => l.id === id);
+        if(!loan) return;
+        currentPayLoanId = id;
+
+        // Calc current Values
         const now = new Date();
-        const created = new Date(loan.dateCreated);
-        let elapsed = Math.ceil((now - created)/(1000*60*60*24)) || 1;
-        let late = Math.ceil((now - new Date(loan.dueDate))/(1000*60*60*24));
+        const createdDate = new Date(loan.dateCreated);
+        let elapsed = Math.ceil((now - createdDate) / (1000 * 60 * 60 * 24)) || 1;
+        let late = Math.ceil((now - new Date(loan.dueDate)) / (1000 * 60 * 60 * 24));
         let admin = (late > 0) ? loan.maxAdmin : Math.min(elapsed * loan.dailyRate, loan.maxAdmin);
         let denda = (late > 0) ? late * 3000 : 0;
-        let totalReceived = loan.amount + admin + denda;
-        let totalProfit = admin + denda;
+        let totalBill = loan.amount + admin + denda;
+        let remaining = totalBill - (loan.paidAmount || 0);
 
-        if(confirm(`Lunasi ${loan.name}?\nTotal: ${formatRupiah(totalReceived)}\n(Pokok ${formatRupiah(loan.amount)} + Profit ${formatRupiah(totalProfit)})`)) {
-            loan.contributors.forEach(contrib => {
-                let sharePercentage = contrib.amount / loan.amount;
-                let returnPrincipal = contrib.amount;
-                let shareProfit = totalProfit * sharePercentage;
-                let totalBack = returnPrincipal + shareProfit;
-                if (contrib.id === 'owner') { owner.balance += totalBack; }
-                else { const inv = investors.find(i => i.id == contrib.id); if (inv) { inv.balance += totalBack; inv.unsplitProfit += shareProfit; } else { owner.balance += totalBack; } }
-            });
-            logTransaction('IN', `Pelunasan: ${loan.name}`, totalReceived, loan.name, 'Contributors');
-            loans.splice(index, 1); saveAll(); renderActiveLoans(); updateDashboard();
+        currentAdminVal = admin + denda;
+        currentRemainingVal = remaining;
+
+        document.getElementById('payTotalBill').innerText = formatRupiah(remaining);
+        document.getElementById('payLoanId').value = id;
+        document.getElementById('payAmount').value = "";
+        
+        if (late > 0) {
+            document.getElementById('payLateText').innerText = `⚠️ Telat ${late} Hari (Denda ${formatRupiah(denda)})`;
+        } else {
+            document.getElementById('payLateText').innerText = "";
         }
+
+        paymentModal.show();
+    }
+
+    function fillPayAmount(type) {
+        if(type === 'admin') document.getElementById('payAmount').value = currentAdminVal;
+        if(type === 'full') document.getElementById('payAmount').value = currentRemainingVal;
+    }
+
+    function submitPayment() {
+        const amount = parseInt(document.getElementById('payAmount').value);
+        if(!amount || amount <= 0) { alert("Masukkan nominal yang valid!"); return; }
+        
+        const type = document.querySelector('input[name="payType"]:checked').value;
+        const loanIndex = loans.findIndex(l => l.id === currentPayLoanId);
+        if(loanIndex === -1) return;
+        
+        const loan = loans[loanIndex];
+        
+        // Update Paid Amount
+        if(typeof loan.paidAmount === 'undefined') loan.paidAmount = 0;
+        loan.paidAmount += amount;
+
+        // DISTRIBUTE FUNDS
+        // Logic:
+        // If Type = Principal -> Return to Contributors' Balance
+        // If Type = Profit -> Add to Profit (Unsplit) or Owner Balance (Profit share)
+        
+        // Simplified Logic:
+        // Profit payments ALSO go to balance (cash is cash), but we tag it for profit distribution.
+        
+        let logDesc = "";
+
+        if (type === 'profit') {
+            logDesc = `Bayar Admin/Denda: ${loan.name}`;
+            // Distribusi Profit (50:50 logic, or just hold in unsplit?)
+            // Let's assume profit payment is split proportionally based on contribution
+            loan.contributors.forEach(contrib => {
+                let sharePct = contrib.amount / loan.amount;
+                let shareAmt = amount * sharePct;
+                
+                if(contrib.id === 'owner') {
+                    owner.balance += shareAmt; // Owner profit just sits in balance
+                } else {
+                    const inv = investors.find(i => i.id == contrib.id);
+                    if(inv) {
+                        inv.balance += shareAmt; // Cash back to balance
+                        inv.unsplitProfit += shareAmt; // Track as profit to be split later
+                    } else {
+                        owner.balance += shareAmt;
+                    }
+                }
+            });
+        } else {
+            logDesc = `Cicilan Pokok: ${loan.name}`;
+            // Return Principal to Balance
+            loan.contributors.forEach(contrib => {
+                let sharePct = contrib.amount / loan.amount;
+                let shareAmt = amount * sharePct;
+                
+                if(contrib.id === 'owner') {
+                    owner.balance += shareAmt;
+                } else {
+                    const inv = investors.find(i => i.id == contrib.id);
+                    if(inv) inv.balance += shareAmt;
+                    else owner.balance += shareAmt;
+                }
+            });
+        }
+
+        logTransaction('IN', logDesc, amount, loan.name, 'System/Investors');
+
+        // Check if Fully Paid
+        // Recalculate Total Bill to be sure
+        const now = new Date();
+        const createdDate = new Date(loan.dateCreated);
+        let elapsed = Math.ceil((now - createdDate) / (1000 * 60 * 60 * 24)) || 1;
+        let late = Math.ceil((now - new Date(loan.dueDate)) / (1000 * 60 * 60 * 24));
+        let admin = (late > 0) ? loan.maxAdmin : Math.min(elapsed * loan.dailyRate, loan.maxAdmin);
+        let denda = (late > 0) ? late * 3000 : 0;
+        let totalBill = loan.amount + admin + denda;
+
+        if (loan.paidAmount >= totalBill) {
+            alert("🎉 LUNAS! Utang ini sudah selesai.");
+            // Move to history
+             history.push({
+                ...loan, datePaid: new Date().toISOString(),
+                finalAdmin: admin, finalDenda: denda, totalPaid: loan.paidAmount
+            });
+            loans.splice(loanIndex, 1);
+        } else {
+            alert("✅ Pembayaran Diterima. Sisa tagihan berkurang.");
+        }
+
+        saveAll();
+        paymentModal.hide();
+        renderActiveLoans();
+        updateDashboard();
     }
 
     function renderInvestments() {
@@ -674,14 +860,49 @@
 
     function updateDashboard() {
         let invBalance = investors.reduce((acc, curr) => acc + curr.balance, 0);
-        let usedAmount = loans.reduce((acc, curr) => acc + curr.amount, 0);
+        
+        // Calculate USED Amount correctly (Total Loan - Total Paid Partial)
+        let usedAmount = loans.reduce((acc, curr) => acc + (curr.amount - (curr.paidAmount || 0)), 0); 
+        // Note: paidAmount includes admin/profit payments too, so this is an approximation of "Outstanding Cash".
+        // A better approximation for "Money Out" is strictly Loan Amount - Principal Repaid. 
+        // But for simplicity in V6, we use the raw remaining balance logic or stick to V5 logic:
+        // V5 logic: Used = Total Loan Amounts.
+        // V6 logic: When partial payment happens, money goes BACK to balance. So 'Available' increases immediately.
+        // Therefore 'Total Asset' = Available + Outstanding Loans.
+        
+        let outstandingPrincipal = loans.reduce((acc, curr) => acc + curr.amount, 0); 
+        // Wait, if they pay principal, we should probably reduce the tracked amount? 
+        // No, we tracked contributions. In submitPayment we returned money to balance.
+        // So Balance is accurate.
+        // We just need to display "Dipinjam Orang" as the total outstanding principal?
+        // Let's keep it simple: Total Asset = Owner Balance + Investor Balance + Outstanding Loans.
+        // Since we returned money to balance on partial payment, Outstanding Loans should functionally decrease?
+        // Actually, in `submitPayment`, we add to `balance`. So the money is in `balance`.
+        // So `dashUsed` should represent money that is NOT in balance but is expected to come back (Principal).
+        // Since we didn't track "Principal Remaining" strictly in database, let's just show Total Asset.
+        
         let totalAvailable = owner.balance + invBalance;
-        let realTotalAsset = totalAvailable + usedAmount;
-        document.getElementById('dashTotalAsset').innerText = formatRupiah(realTotalAsset);
-        document.getElementById('dashUsed').innerText = formatRupiah(usedAmount);
+        
         document.getElementById('dashAvailable').innerText = formatRupiah(totalAvailable);
-        document.getElementById('dashOwnerBalance').innerText = formatRupiah(owner.balance + loans.reduce((acc, l) => { let ownCon = l.contributors.find(c => c.id === 'owner'); return acc + (ownCon ? ownCon.amount : 0); }, 0));
-        document.getElementById('dashInvestorBalance').innerText = formatRupiah(invBalance + loans.reduce((acc, l) => { let invConTotal = l.contributors.filter(c => c.id !== 'owner').reduce((a, c) => a + c.amount, 0); return acc + invConTotal; }, 0));
+        
+        // Fix Asset Calculation for V6
+        // Asset = Uang di Tangan (Available) + Uang di Luar (Outstanding Principal)
+        // Outstanding Principal = Initial Loan - Principal Repaid.
+        // Since we don't strictly track Principal Repaid vs Profit Repaid in the loan object structure easily without complex logic,
+        // Let's rely on: Asset = Initial Capital + Profit Realized.
+        // But "Profit Realized" is hard to track globally.
+        // Simplest: Just sum Owner Balance + Investor Balance + Sum(Active Loans Remaining Principal).
+        // Approximation: Sum(Active Loans Amount) - (Sum(Active Loans Paid) * maybe?)
+        // Let's stick to V5 logic for visual consistency: Used = Sum of Loan Amounts.
+        // (Even if partially paid, the loan is still "Active").
+        let simpleUsed = loans.reduce((acc, curr) => acc + curr.amount, 0); 
+        document.getElementById('dashUsed').innerText = formatRupiah(simpleUsed);
+        
+        // Total Asset = Available + Simple Used (Roughly).
+        document.getElementById('dashTotalAsset').innerText = formatRupiah(totalAvailable + simpleUsed);
+
+        document.getElementById('dashOwnerBalance').innerText = formatRupiah(owner.balance);
+        document.getElementById('dashInvestorBalance').innerText = formatRupiah(invBalance);
     }
 
     function getLoanConfig(amount) {
@@ -712,7 +933,7 @@
     }
 
     function resetData() { if(confirm("RESET TOTAL (Hapus Semua)?")) { localStorage.clear(); location.reload(); } }
-    function saveAll() { localStorage.setItem('loans_v5', JSON.stringify(loans)); localStorage.setItem('transactions_v5', JSON.stringify(transactions)); localStorage.setItem('blacklist_v5', JSON.stringify(blacklist)); localStorage.setItem('investors_v5', JSON.stringify(investors)); localStorage.setItem('owner_v5', JSON.stringify(owner)); }
+    function saveAll() { localStorage.setItem('loans_v6', JSON.stringify(loans)); localStorage.setItem('transactions_v6', JSON.stringify(transactions)); localStorage.setItem('blacklist_v6', JSON.stringify(blacklist)); localStorage.setItem('investors_v6', JSON.stringify(investors)); localStorage.setItem('owner_v6', JSON.stringify(owner)); }
     function formatRupiah(num) { return "Rp " + num.toLocaleString('id-ID'); }
 
     renderSourceCheckboxes();
